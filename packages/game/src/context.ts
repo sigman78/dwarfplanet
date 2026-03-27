@@ -1,8 +1,8 @@
-import type { World } from 'miniplex'
+import type { World as EcsWorld } from 'miniplex'
 import type { GameMap } from './map/map'
 import type { Rng } from './rng'
 import type { GameEventsLog } from './events'
-import type { EntityComponents } from './actor/components'
+import type { PawnComponents } from './actor/components'
 
 export type WorldState = {
   tick: number
@@ -12,10 +12,25 @@ export type WorldState = {
   nextEntityId: number
 }
 
+export type PawnQueries = {
+  withAge: ReturnType<EcsWorld<PawnComponents>['with']>
+  withHunger: ReturnType<EcsWorld<PawnComponents>['with']>
+  withMating: ReturnType<EcsWorld<PawnComponents>['with']>
+  withNeighborData: ReturnType<EcsWorld<PawnComponents>['with']>
+  withBehaviorState: ReturnType<EcsWorld<PawnComponents>['with']>
+  withBehaviorStatePosition: ReturnType<EcsWorld<PawnComponents>['with']>
+  withFullPawn: ReturnType<EcsWorld<PawnComponents>['with']>
+  withMigrateTarget: ReturnType<EcsWorld<PawnComponents>['with']>
+  withAggroActor: ReturnType<EcsWorld<PawnComponents>['with']>
+  withHealth: ReturnType<EcsWorld<PawnComponents>['with']>
+}
+
 export type SystemContext = {
-  ecs: World<EntityComponents>
+  ecs: EcsWorld<PawnComponents>
   map: GameMap
   rng: Rng
   worldState: WorldState
   events: GameEventsLog
+  queries: PawnQueries
+  neighborById: Map<number, { id: number; kind: 'animal' | 'fish'; mating: { season: boolean; refractory: boolean } }>
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { Game } from '../game'
-import { ActorStateEnum } from '../actor/statemachine'
+import { PawnState } from '../actor/statemachine'
 
 describe('simulation integration', () => {
   it('runs 200 ticks without population extinction or explosion', () => {
@@ -93,9 +93,9 @@ describe('simulation integration', () => {
     const nonWanderStates = new Set<string>()
     for (let t = 0; t < 200; t++) {
       game.step()
-      for (const e of game.world.ecs.with('actorState')) {
-        const s = e.actorState!.state
-        if (s !== ActorStateEnum.Wander) nonWanderStates.add(s)
+      for (const e of game.world.ecs.with('behaviorState')) {
+        const s = e.behaviorState!.state
+        if (s !== PawnState.Wander) nonWanderStates.add(s)
       }
     }
     expect(nonWanderStates.size).toBeGreaterThan(0)
