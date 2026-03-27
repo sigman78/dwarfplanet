@@ -133,7 +133,7 @@ describe('actorgen', () => {
     spawnAnimal(ecs, { x: 1, y: 0 }, rng, 2)
     const actors = [...ecs.with('age')]
     const ticks = actors.map((e) => e.age!.maxTicks)
-    expect(ticks[0]).not.toBeUndefined()
-    expect(ticks[1]).not.toBeUndefined()
+    expect(ticks[0]).toBeGreaterThan(0)
+    expect(ticks[0]).not.toBe(ticks[1])
   })
 })
