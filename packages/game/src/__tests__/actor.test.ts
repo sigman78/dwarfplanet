@@ -27,20 +27,19 @@ function makeCtx(ecs: World<PawnComponents>, map: GameMap, rng: Rng, worldState?
       season: false,
       seasonCycle: 100,
       nextSeasonTick: 100,
-      nextEntityId: 10_000,
       ...worldState,
     },
     queries: {
-      withAge: ecs.with('age', 'id'),
-      withHunger: ecs.with('hunger', 'kind', 'id'),
+      withAge: ecs.with('age'),
+      withHunger: ecs.with('hunger', 'kind'),
       withMating: ecs.with('mating'),
-      withNeighborData: ecs.with('id', 'kind', 'mating'),
-      withBehaviorState: ecs.with('behaviorState', 'position', 'kind', 'id'),
-      withBehaviorStatePosition: ecs.with('behaviorState', 'position', 'hunger', 'kind', 'mating', 'id'),
+      withNeighborData: ecs.with('kind', 'mating'),
+      withBehaviorState: ecs.with('behaviorState', 'position', 'kind'),
+      withBehaviorStatePosition: ecs.with('behaviorState', 'position', 'hunger', 'kind', 'mating'),
       withFullPawn: ecs.with('behaviorState', 'position', 'hunger', 'kind'),
-      withMigrateTarget: ecs.with('behaviorState', 'position', 'kind', 'id', 'migrateTarget'),
-      withAggroActor: ecs.with('behaviorState', 'position', 'health', 'kind', 'id', 'mating'),
-      withHealth: ecs.with('id', 'kind', 'health'),
+      withMigrateTarget: ecs.with('behaviorState', 'position', 'kind', 'migrateTarget'),
+      withAggroActor: ecs.with('behaviorState', 'position', 'health', 'kind', 'mating'),
+      withHealth: ecs.with('kind', 'health'),
     },
     neighborById: new Map(),
   }
@@ -151,7 +150,7 @@ describe('actorgen', () => {
   it('spawnAnimal creates entity with all required components', () => {
     const ecs = new World<PawnComponents>()
     const rng = new Rng(1)
-    spawnAnimal(ecs, { x: 5, y: 5 }, rng, 1)
+    spawnAnimal(ecs, { x: 5, y: 5 }, rng)
     const actors = ecs.with('position', 'health', 'kind', 'behaviorState', 'hunger', 'age', 'mating')
     expect([...actors].length).toBe(1)
     const e = [...actors][0]
@@ -162,7 +161,7 @@ describe('actorgen', () => {
 
   it('spawnFish creates entity with subtype fish', () => {
     const ecs = new World<PawnComponents>()
-    spawnFish(ecs, { x: 2, y: 3 }, new Rng(2), 2)
+    spawnFish(ecs, { x: 2, y: 3 }, new Rng(2))
     const fish = ecs.with('kind')
     expect([...fish][0].kind).toBe('fish')
   })
@@ -170,8 +169,8 @@ describe('actorgen', () => {
   it('age maxTicks has variance between spawns', () => {
     const ecs = new World<PawnComponents>()
     const rng = new Rng(99)
-    spawnAnimal(ecs, { x: 0, y: 0 }, rng, 1)
-    spawnAnimal(ecs, { x: 1, y: 0 }, rng, 2)
+    spawnAnimal(ecs, { x: 0, y: 0 }, rng)
+    spawnAnimal(ecs, { x: 1, y: 0 }, rng)
     const actors = [...ecs.with('age')]
     const ticks = actors.map((e) => e.age!.maxTicks)
     expect(ticks[0]).toBeGreaterThan(0)
@@ -202,7 +201,7 @@ describe('GameEventsLog', () => {
 describe('ageSystem', () => {
   it('removes entity that reached maxTicks', () => {
     const ecs = new World<PawnComponents>()
-    spawnAnimal(ecs, { x: 0, y: 0 }, new Rng(1), 1)
+    spawnAnimal(ecs, { x: 0, y: 0 }, new Rng(1))
     const e = [...ecs.with('age')][0]
     e.age!.ticks = e.age!.maxTicks
     const map = new GameMap(10, 10)
@@ -214,7 +213,7 @@ describe('ageSystem', () => {
 describe('hungerSystem', () => {
   it('removes entity at hunger >= 1', () => {
     const ecs = new World<PawnComponents>()
-    spawnAnimal(ecs, { x: 0, y: 0 }, new Rng(1), 1)
+    spawnAnimal(ecs, { x: 0, y: 0 }, new Rng(1))
     const e = [...ecs.with('hunger')][0]
     e.hunger!.value = 1.0
     hungerSystem(makeCtx(ecs, new GameMap(10, 10), new Rng(1)))
@@ -223,7 +222,7 @@ describe('hungerSystem', () => {
 
   it('increments hunger each tick', () => {
     const ecs = new World<PawnComponents>()
-    spawnAnimal(ecs, { x: 0, y: 0 }, new Rng(1), 1)
+    spawnAnimal(ecs, { x: 0, y: 0 }, new Rng(1))
     const before = [...ecs.with('hunger')][0].hunger!.value
     hungerSystem(makeCtx(ecs, new GameMap(10, 10), new Rng(1)))
     const after = [...ecs.with('hunger')][0].hunger!.value
@@ -235,7 +234,7 @@ describe('eatSystem', () => {
   it('resets hunger when actor is on food biome', () => {
     const ecs = new World<PawnComponents>()
     const rng = new Rng(1)
-    spawnAnimal(ecs, { x: 5, y: 5 }, rng, 1)
+    spawnAnimal(ecs, { x: 5, y: 5 }, rng)
     const map = new GameMap(10, 10)
     map.setBiome(5, 5, Biome.Grassland)
     const e = [...ecs.with('hunger', 'behaviorState')][0]
@@ -249,7 +248,7 @@ describe('eatSystem', () => {
 describe('matingSeasonSystem', () => {
   it('sets season flag on actors when world season is active', () => {
     const ecs = new World<PawnComponents>()
-    spawnAnimal(ecs, { x: 0, y: 0 }, new Rng(1), 1)
+    spawnAnimal(ecs, { x: 0, y: 0 }, new Rng(1))
     matingSeasonSystem(makeCtx(ecs, new GameMap(10, 10), new Rng(1), { season: true }))
     const e = [...ecs.with('mating')][0]
     expect(e.mating!.season).toBe(true)

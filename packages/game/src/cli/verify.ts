@@ -64,8 +64,8 @@ function formatStateCounts(counts: Record<string, number>): string {
 }
 
 function findSpotlightId(game: Game): number | null {
-  for (const e of game.world.ecs.with('id', 'kind')) {
-    if (e.kind === 'animal') return e.id!
+  for (const e of game.world.ecs.with('kind')) {
+    if (e.kind === 'animal') return game.world.ecs.id(e) ?? null
   }
   return null
 }
@@ -74,19 +74,16 @@ function getSpotlightInfo(
   game: Game,
   id: number,
 ): { x: number; y: number; hunger: number; ageTicks: number; maxTicks: number; state: string } | null {
-  for (const e of game.world.ecs.with('id', 'position', 'hunger', 'age', 'behaviorState')) {
-    if (e.id === id) {
-      return {
-        x: e.position!.x,
-        y: e.position!.y,
-        hunger: e.hunger!.value,
-        ageTicks: e.age!.ticks,
-        maxTicks: e.age!.maxTicks,
-        state: e.behaviorState!.state as string,
-      }
-    }
+  const e = game.world.ecs.entity(id)
+  if (!e || !e.position || !e.hunger || !e.age || !e.behaviorState) return null
+  return {
+    x: e.position.x,
+    y: e.position.y,
+    hunger: e.hunger.value,
+    ageTicks: e.age.ticks,
+    maxTicks: e.age.maxTicks,
+    state: e.behaviorState.state as string,
   }
-  return null
 }
 
 function countDeaths(events: Array<{ text: string }>, cause: string): number {

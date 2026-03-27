@@ -1,8 +1,7 @@
 import type { GameMap } from './map'
+import type { Point2d } from '../types'
 
-export type NavPos = { x: number; y: number }
-
-export function getNextStep(from: NavPos, to: NavPos, isLand: boolean, map: GameMap): NavPos {
+export function getNextStep(from: Point2d, to: Point2d, isLand: boolean, map: GameMap): Point2d {
   const dx = Math.sign(to.x - from.x)
   const dy = Math.sign(to.y - from.y)
   const nx = map.wrapX(from.x + dx)

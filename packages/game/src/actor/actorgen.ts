@@ -1,19 +1,14 @@
 import type { World } from 'miniplex'
-import type { PawnComponents, Position } from './components'
+import type { PawnComponents } from './components'
+import type { Point2d } from '../types'
 import { PawnState } from './statemachine'
 import { ANIMAL_DEFAULTS, FISH_DEFAULTS } from './archetypes'
 import type { Rng } from '../rng'
 
-export function spawnAnimal(
-  ecs: World<PawnComponents>,
-  pos: Position,
-  rng: Rng,
-  id: number,
-): void {
+export function spawnAnimal(ecs: World<PawnComponents>, pos: Point2d, rng: Rng): PawnComponents {
   const d = ANIMAL_DEFAULTS
-  ecs.add({
-    id,
-    position: { ...pos },
+  return ecs.add({
+    position: { x: pos.x, y: pos.y },
     health: { current: d.maxHealth, max: d.maxHealth },
     kind: 'animal',
     behaviorState: { state: PawnState.Wander, timer: rng.int(5, 15) },
@@ -23,16 +18,10 @@ export function spawnAnimal(
   })
 }
 
-export function spawnFish(
-  ecs: World<PawnComponents>,
-  pos: Position,
-  rng: Rng,
-  id: number,
-): void {
+export function spawnFish(ecs: World<PawnComponents>, pos: Point2d, rng: Rng): PawnComponents {
   const d = FISH_DEFAULTS
-  ecs.add({
-    id,
-    position: { ...pos },
+  return ecs.add({
+    position: { x: pos.x, y: pos.y },
     health: { current: d.maxHealth, max: d.maxHealth },
     kind: 'fish',
     behaviorState: { state: PawnState.Wander, timer: rng.int(5, 15) },

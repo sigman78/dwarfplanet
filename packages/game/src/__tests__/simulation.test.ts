@@ -47,13 +47,16 @@ describe('simulation integration', () => {
   it('at least one actor moves position within 20 ticks', () => {
     const game = new Game(42, { width: 64, height: 32, animalCount: 20, fishCount: 15 })
     const initialPositions = new Map<number, { x: number; y: number }>()
-    for (const e of game.world.ecs.with('id', 'position')) {
-      initialPositions.set(e.id!, { x: e.position!.x, y: e.position!.y })
+    for (const e of game.world.ecs.with('position')) {
+      const id = game.world.ecs.id(e)
+      if (id !== undefined) initialPositions.set(id, { x: e.position!.x, y: e.position!.y })
     }
     for (let t = 0; t < 20; t++) game.step()
     let moved = false
-    for (const e of game.world.ecs.with('id', 'position')) {
-      const init = initialPositions.get(e.id!)
+    for (const e of game.world.ecs.with('position')) {
+      const id = game.world.ecs.id(e)
+      if (id === undefined) continue
+      const init = initialPositions.get(id)
       if (init && (e.position!.x !== init.x || e.position!.y !== init.y)) {
         moved = true
         break
@@ -77,12 +80,15 @@ describe('simulation integration', () => {
   it('all actors age by exactly 10 ticks over 10 steps', () => {
     const game = new Game(42, { width: 64, height: 32, animalCount: 20, fishCount: 15 })
     const initialAges = new Map<number, number>()
-    for (const e of game.world.ecs.with('id', 'age')) {
-      initialAges.set(e.id!, e.age!.ticks)
+    for (const e of game.world.ecs.with('age')) {
+      const id = game.world.ecs.id(e)
+      if (id !== undefined) initialAges.set(id, e.age!.ticks)
     }
     for (let t = 0; t < 10; t++) game.step()
-    for (const e of game.world.ecs.with('id', 'age')) {
-      const initial = initialAges.get(e.id!)
+    for (const e of game.world.ecs.with('age')) {
+      const id = game.world.ecs.id(e)
+      if (id === undefined) continue
+      const initial = initialAges.get(id)
       if (initial === undefined) continue
       expect(e.age!.ticks).toBe(initial + 10)
     }

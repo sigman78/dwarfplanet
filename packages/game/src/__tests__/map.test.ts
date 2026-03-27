@@ -8,6 +8,7 @@ import {
   FISH_FOOD_BIOMES,
 } from '../map/tiles'
 import { GameMap } from '../map/map'
+import type { EntityId } from '../types'
 import { generateMap } from '../map/mapgen'
 import { Rng } from '../rng'
 
@@ -73,26 +74,26 @@ describe('GameMap', () => {
 
   it('spatial hash: findEntitiesInRadius returns inserted entity', () => {
     const map = new GameMap(32, 32)
-    map.addEntity(7, 10, 10)
+    map.addEntity(7 as EntityId, 10, 10)
     const found = map.getEntitiesInRadius(10, 10, 3)
-    expect(found.has(7)).toBe(true)
+    expect(found.has(7 as EntityId)).toBe(true)
   })
 
   it('spatial hash: removeEntity is no longer found', () => {
     const map = new GameMap(32, 32)
-    map.addEntity(3, 5, 5)
-    map.removeEntity(3, 5, 5)
+    map.addEntity(3 as EntityId, 5, 5)
+    map.removeEntity(3 as EntityId, 5, 5)
     const found = map.getEntitiesInRadius(5, 5, 3)
-    expect(found.has(3)).toBe(false)
+    expect(found.has(3 as EntityId)).toBe(false)
   })
 
   it('spatial hash: entity outside radius not returned', () => {
     const map = new GameMap(64, 64)
-    map.addEntity(1, 0, 0)
-    map.addEntity(2, 50, 50)
+    map.addEntity(1 as EntityId, 0, 0)
+    map.addEntity(2 as EntityId, 50, 50)
     const found = map.getEntitiesInRadius(0, 0, 3)
-    expect(found.has(1)).toBe(true)
-    expect(found.has(2)).toBe(false)
+    expect(found.has(1 as EntityId)).toBe(true)
+    expect(found.has(2 as EntityId)).toBe(false)
   })
 })
 

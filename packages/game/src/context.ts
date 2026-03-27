@@ -2,14 +2,14 @@ import type { World as EcsWorld } from 'miniplex'
 import type { GameMap } from './map/map'
 import type { Rng } from './rng'
 import type { GameEventsLog } from './events'
-import type { PawnComponents } from './actor/components'
+import type { PawnComponents, PawnKind, Mating } from './actor/components'
+import type { EntityId } from './types'
 
 export type WorldState = {
   tick: number
   season: boolean
   seasonCycle: number
   nextSeasonTick: number
-  nextEntityId: number
 }
 
 export type PawnQueries = {
@@ -32,5 +32,5 @@ export type SystemContext = {
   worldState: WorldState
   events: GameEventsLog
   queries: PawnQueries
-  neighborById: Map<number, { id: number; kind: 'animal' | 'fish'; mating: { season: boolean; refractory: boolean } }>
+  neighborById: Map<EntityId, { kind: PawnKind; mating: Mating }>
 }

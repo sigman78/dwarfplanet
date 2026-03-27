@@ -1,4 +1,6 @@
-export type EventOrigin = 'global' | number | { x: number; y: number }
+import type { EntityId, Point2d } from './types'
+
+export type EventOrigin = 'global' | EntityId | Point2d
 
 export type GameEvent = {
   tick: number

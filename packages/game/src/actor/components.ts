@@ -1,4 +1,5 @@
 import type { PawnState } from './statemachine'
+import type { Point2d } from '../types'
 
 export type Position = { x: number; y: number }
 export type Health = { current: number; max: number }
@@ -9,7 +10,6 @@ export type Age = { ticks: number; maxTicks: number }
 export type Mating = { season: boolean; refractory: boolean }
 
 export type PawnComponents = {
-  id?: number
   position?: Position
   health?: Health
   kind?: PawnKind
@@ -17,5 +17,5 @@ export type PawnComponents = {
   hunger?: Hunger
   age?: Age
   mating?: Mating
-  migrateTarget?: Position
+  migrateTarget?: Point2d
 }

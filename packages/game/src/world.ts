@@ -1,5 +1,5 @@
 import { World as EcsWorld } from 'miniplex'
-import type { PawnComponents, PawnKind } from './actor/components'
+import type { PawnComponents, PawnKind, Mating } from './actor/components'
 import { GameMap } from './map/map'
 import { generateMap } from './map/mapgen'
 import { GameEventsLog } from './events'
@@ -19,6 +19,7 @@ import {
 } from './actor/systems'
 import type { Rng } from './rng'
 import { spawnAnimal, spawnFish } from './actor/actorgen'
+import type { EntityId } from './types'
 
 export type WorldConfig = {
   width?: number
@@ -49,20 +50,19 @@ export class GameWorld {
       season: false,
       seasonCycle: config.seasonCycle ?? 200,
       nextSeasonTick: config.seasonCycle ?? 200,
-      nextEntityId: 1,
     }
 
     this.queries = {
-      withAge: this.ecs.with('age', 'id'),
-      withHunger: this.ecs.with('hunger', 'kind', 'id'),
+      withAge: this.ecs.with('age'),
+      withHunger: this.ecs.with('hunger', 'kind'),
       withMating: this.ecs.with('mating'),
-      withNeighborData: this.ecs.with('id', 'kind', 'mating'),
-      withBehaviorState: this.ecs.with('behaviorState', 'position', 'kind', 'id'),
-      withBehaviorStatePosition: this.ecs.with('behaviorState', 'position', 'hunger', 'kind', 'mating', 'id'),
+      withNeighborData: this.ecs.with('kind', 'mating'),
+      withBehaviorState: this.ecs.with('behaviorState', 'position', 'kind'),
+      withBehaviorStatePosition: this.ecs.with('behaviorState', 'position', 'hunger', 'kind', 'mating'),
       withFullPawn: this.ecs.with('behaviorState', 'position', 'hunger', 'kind'),
-      withMigrateTarget: this.ecs.with('behaviorState', 'position', 'kind', 'id', 'migrateTarget'),
-      withAggroActor: this.ecs.with('behaviorState', 'position', 'health', 'kind', 'id', 'mating'),
-      withHealth: this.ecs.with('id', 'kind', 'health'),
+      withMigrateTarget: this.ecs.with('behaviorState', 'position', 'kind', 'migrateTarget'),
+      withAggroActor: this.ecs.with('behaviorState', 'position', 'health', 'kind', 'mating'),
+      withHealth: this.ecs.with('kind', 'health'),
     }
 
     generateMap(this.map, rng)
@@ -76,9 +76,8 @@ export class GameWorld {
       const x = rng.int(0, this.map.width - 1)
       const y = rng.int(0, this.map.height - 1)
       if (this.map.isPassable(x, y, true)) {
-        const id = this.worldState.nextEntityId++
-        spawnAnimal(this.ecs, { x, y }, rng, id)
-        this.map.addEntity(id, x, y)
+        const entity = spawnAnimal(this.ecs, { x, y }, rng)
+        this.map.addEntity(this.ecs.id(entity)! as EntityId, x, y)
         placed++
       }
     }
@@ -87,9 +86,8 @@ export class GameWorld {
       const x = rng.int(0, this.map.width - 1)
       const y = rng.int(0, this.map.height - 1)
       if (this.map.isPassable(x, y, false)) {
-        const id = this.worldState.nextEntityId++
-        spawnFish(this.ecs, { x, y }, rng, id)
-        this.map.addEntity(id, x, y)
+        const entity = spawnFish(this.ecs, { x, y }, rng)
+        this.map.addEntity(this.ecs.id(entity)! as EntityId, x, y)
         placed++
       }
     }
@@ -121,9 +119,9 @@ export class GameWorld {
       })
     }
 
-    const neighborById = new Map<number, { id: number; kind: PawnKind; mating: { season: boolean; refractory: boolean } }>()
+    const neighborById = new Map<EntityId, { kind: PawnKind; mating: Mating }>()
     for (const n of this.queries.withNeighborData) {
-      neighborById.set(n.id!, { id: n.id!, kind: n.kind!, mating: n.mating! })
+      neighborById.set(this.ecs.id(n)! as EntityId, { kind: n.kind!, mating: n.mating! })
     }
 
     this.processor.tick({

@@ -1,6 +1,6 @@
 export const ANIMAL_DEFAULTS = {
   maxHealth: 100,
-  baseMaxTicks: 800,
+  baseMaxTicks: 600,
   ageTicks: 200,
   hungerRate: 0.003,
 }
