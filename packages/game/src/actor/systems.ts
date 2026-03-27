@@ -213,8 +213,23 @@ export function migrateSystem(ctx: SystemContext): void {
 
 export function mateSystem(ctx: SystemContext): void {
   const { ecs, rng, events, worldState } = ctx
+  const neighborById = new Map<number, { id: number; subtype: { kind: 'animal' | 'fish' }; mating: { season: boolean; aggro: boolean } }>()
+  for (const n of ecs.with('id', 'subtype', 'mating')) {
+    neighborById.set(n.id!, { id: n.id!, subtype: n.subtype!, mating: n.mating! })
+  }
   for (const e of ecs.with('actorState', 'position', 'subtype', 'id', 'mating')) {
     if (e.actorState!.state !== ActorStateEnum.Mate) continue
+    const nearbyIds = ctx.map.getEntitiesInRadius(e.position!.x, e.position!.y, SEARCH_RADIUS)
+    const hasPartner = [...nearbyIds].some((nid) => {
+      if (nid === e.id) return false
+      const neighbor = neighborById.get(nid)
+      return neighbor?.subtype.kind === e.subtype!.kind && !neighbor.mating.aggro
+    })
+    if (!hasPartner) {
+      e.actorState!.state = ActorStateEnum.Wander
+      e.actorState!.timer = 5
+      continue
+    }
     const count = rng.int(1, 3)
     for (let i = 0; i < count; i++) {
       const id = ++ctx.worldState.nextEntityId

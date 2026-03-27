@@ -23,6 +23,7 @@ type Transition = [from: ActorStateEnum, to: ActorStateEnum, check: (c: Transiti
 const TRANSITIONS: Transition[] = [
   [ActorStateEnum.Wander, ActorStateEnum.Seek, (c) => c.hunger > 0.6 && c.foodNearby],
   [ActorStateEnum.Seek, ActorStateEnum.Eat, (c) => c.adjacent],
+  [ActorStateEnum.Seek, ActorStateEnum.Wander, (c) => !c.foodNearby],
   [ActorStateEnum.Eat, ActorStateEnum.Wander, (c) => c.hunger < 0.2],
   [ActorStateEnum.Wander, ActorStateEnum.Migrate, (c) => !c.foodNearby && c.hunger < 0.5],
   [ActorStateEnum.Migrate, ActorStateEnum.Wander, (c) => c.atTarget],
