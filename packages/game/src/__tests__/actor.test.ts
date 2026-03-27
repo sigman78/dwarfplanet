@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ActorStateEnum, canTransition } from '../actor/statemachine'
+import { ActorStateEnum, canTransition, getNextState } from '../actor/statemachine'
 
 describe('state machine transitions', () => {
   it('Wander → Seek when hungry and food nearby', () => {
@@ -70,5 +70,34 @@ describe('state machine transitions', () => {
         adjacent: false,
       }),
     ).toBe(true)
+  })
+
+  it('getNextState returns current state when no conditions match', () => {
+    // hunger=0.55 avoids Wander->Seek (needs >0.6) and Wander->Migrate (needs <0.5); all boolean conditions false
+    expect(
+      getNextState(ActorStateEnum.Wander, {
+        hunger: 0.55,
+        foodNearby: false,
+        seasonActive: false,
+        partnerNearby: false,
+        rivalNearby: false,
+        atTarget: false,
+        adjacent: false,
+      }),
+    ).toBe(ActorStateEnum.Wander)
+  })
+
+  it('getNextState returns Seek when hunger > 0.6 and foodNearby', () => {
+    expect(
+      getNextState(ActorStateEnum.Wander, {
+        hunger: 0.7,
+        foodNearby: true,
+        seasonActive: false,
+        partnerNearby: false,
+        rivalNearby: false,
+        atTarget: false,
+        adjacent: false,
+      }),
+    ).toBe(ActorStateEnum.Seek)
   })
 })
