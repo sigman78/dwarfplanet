@@ -1,4 +1,4 @@
-export enum ActorStateEnum {
+export enum PawnState {
   Wander = 'Wander',
   Seek = 'Seek',
   Eat = 'Eat',
@@ -17,25 +17,25 @@ export type TransitionConditions = {
   adjacent: boolean
 }
 
-type Transition = [from: ActorStateEnum, to: ActorStateEnum, check: (c: TransitionConditions) => boolean]
+type Transition = [from: PawnState, to: PawnState, check: (c: TransitionConditions) => boolean]
 
 // first matching rule wins; order encodes priority
 const TRANSITIONS: Transition[] = [
-  [ActorStateEnum.Wander, ActorStateEnum.Seek, (c) => c.hunger > 0.6 && c.foodNearby],
-  [ActorStateEnum.Seek, ActorStateEnum.Eat, (c) => c.adjacent],
-  [ActorStateEnum.Seek, ActorStateEnum.Wander, (c) => !c.foodNearby],
-  [ActorStateEnum.Eat, ActorStateEnum.Wander, (c) => c.hunger < 0.2],
-  [ActorStateEnum.Wander, ActorStateEnum.Migrate, (c) => !c.foodNearby && c.hunger < 0.5],
-  [ActorStateEnum.Migrate, ActorStateEnum.Wander, (c) => c.atTarget],
-  [ActorStateEnum.Wander, ActorStateEnum.Mate, (c) => c.seasonActive && c.partnerNearby && !c.rivalNearby],
-  [ActorStateEnum.Mate, ActorStateEnum.Wander, (_c) => true], // timer in ActorStateComponent controls duration; this fires when timer expires
-  [ActorStateEnum.Wander, ActorStateEnum.Aggro, (c) => c.seasonActive && c.rivalNearby],
-  [ActorStateEnum.Aggro, ActorStateEnum.Wander, (c) => !c.rivalNearby],
+  [PawnState.Wander, PawnState.Seek, (c) => c.hunger > 0.6 && c.foodNearby],
+  [PawnState.Seek, PawnState.Eat, (c) => c.adjacent],
+  [PawnState.Seek, PawnState.Wander, (c) => !c.foodNearby],
+  [PawnState.Eat, PawnState.Wander, (c) => c.hunger < 0.2],
+  [PawnState.Wander, PawnState.Migrate, (c) => !c.foodNearby && c.hunger < 0.5],
+  [PawnState.Migrate, PawnState.Wander, (c) => c.atTarget],
+  [PawnState.Wander, PawnState.Mate, (c) => c.seasonActive && c.partnerNearby && !c.rivalNearby],
+  [PawnState.Mate, PawnState.Wander, (_c) => true], // timer in BehaviorState controls duration; this fires when timer expires
+  [PawnState.Wander, PawnState.Aggro, (c) => c.seasonActive && c.rivalNearby],
+  [PawnState.Aggro, PawnState.Wander, (c) => !c.rivalNearby],
 ]
 
 export function canTransition(
-  from: ActorStateEnum,
-  to: ActorStateEnum,
+  from: PawnState,
+  to: PawnState,
   cond: TransitionConditions,
 ): boolean {
   const t = TRANSITIONS.find((tr) => tr[0] === from && tr[1] === to)
@@ -43,9 +43,9 @@ export function canTransition(
 }
 
 export function getNextState(
-  current: ActorStateEnum,
+  current: PawnState,
   cond: TransitionConditions,
-): ActorStateEnum {
+): PawnState {
   for (const [from, to, check] of TRANSITIONS) {
     if (from === current && check(cond)) return to
   }
