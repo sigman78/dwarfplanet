@@ -27,7 +27,8 @@ export function generateMap(map: GameMap, rng: Rng): void {
       const tempRaw = (tempNoise(x * ts, y * ts) + 1) / 2
       const temp = tempRaw * 0.5 + latBias * 0.5
 
-      if (height < 0.3) { map.setBiome(x, y, Biome.Water); continue }
+      if (height < 0.2) { map.setBiome(x, y, Biome.DeepWater); continue }
+      if (height < 0.3) { map.setBiome(x, y, Biome.CoastalWater); continue }
       if (height > 0.85) { map.setBiome(x, y, Biome.Mountain); continue }
 
       const ti = temp < 0.4 ? 0 : temp < 0.7 ? 1 : 2

@@ -23,3 +23,14 @@
 - 43 passing tests (unit + simulation integration, deterministic via fixed seeds)
 - Typecheck clean, lint clean
 
+## Post-Plan-01 Refactors (2026-03-27)
+
+- Enhanced verify CLI: actor overlay (`@`/`f`) on map, state distribution per interval, spotlight actor tracking, death summary
+- 5 new simulation behavior tests (movement, eat cycle, aging, state transitions, fish lifecycle) — 48 tests total
+- Naming refactor: `EntityComponents`→`PawnComponents`, `ActorStateEnum`→`PawnState`, `Subtype` wrapper→`PawnKind` flat union, `actorState`→`behaviorState`, `mating.aggro`→`mating.refractory`
+- ECS query caching: all queries built once in `GameWorld` constructor, passed via `SystemContext.queries`
+- `neighborById` map built once per tick in `GameWorld.step()`, shared across systems
+- `aggroSystem` removal uses entity refs directly (no full-world scan)
+- `hasFoodNearby`/`seekSystem` explicit Y-bounds clamping
+- Biome split: `Water`→`DeepWater` (height<0.2) + `CoastalWater` (0.2–0.3); `CoastalWater` is fish food biome
+

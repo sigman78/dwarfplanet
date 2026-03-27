@@ -20,7 +20,8 @@ describe('tiles', () => {
   })
 
   it('water is not land-passable', () => {
-    expect(LAND_PASSABLE_BIOMES.has(Biome.Water)).toBe(false)
+    expect(LAND_PASSABLE_BIOMES.has(Biome.DeepWater)).toBe(false)
+    expect(LAND_PASSABLE_BIOMES.has(Biome.CoastalWater)).toBe(false)
   })
 
   it('mountain is not land-passable', () => {
@@ -28,15 +29,17 @@ describe('tiles', () => {
   })
 
   it('water is fish-passable', () => {
-    expect(FISH_PASSABLE_BIOMES.has(Biome.Water)).toBe(true)
+    expect(FISH_PASSABLE_BIOMES.has(Biome.DeepWater)).toBe(true)
+    expect(FISH_PASSABLE_BIOMES.has(Biome.CoastalWater)).toBe(true)
   })
 
   it('grassland is animal food', () => {
     expect(ANIMAL_FOOD_BIOMES.has(Biome.Grassland)).toBe(true)
   })
 
-  it('water is fish food', () => {
-    expect(FISH_FOOD_BIOMES.has(Biome.Water)).toBe(true)
+  it('coastal water is fish food', () => {
+    expect(FISH_FOOD_BIOMES.has(Biome.CoastalWater)).toBe(true)
+    expect(FISH_FOOD_BIOMES.has(Biome.DeepWater)).toBe(false)
   })
 })
 
@@ -56,7 +59,7 @@ describe('GameMap', () => {
 
   it('isPassable: water blocks land actors', () => {
     const map = new GameMap(10, 10)
-    map.setBiome(5, 5, Biome.Water)
+    map.setBiome(5, 5, Biome.CoastalWater)
     expect(map.isPassable(5, 5, true)).toBe(false)
     expect(map.isPassable(5, 5, false)).toBe(true)
   })
@@ -105,7 +108,7 @@ describe('generateMap', () => {
   it('produces water at expected proportion (roughly 20-50%)', () => {
     const map = new GameMap(64, 32)
     generateMap(map, new Rng(42))
-    const waterCount = Array.from(map.biomes).filter((b) => b === Biome.Water).length
+    const waterCount = Array.from(map.biomes).filter((b) => b === Biome.DeepWater || b === Biome.CoastalWater).length
     const ratio = waterCount / (64 * 32)
     expect(ratio).toBeGreaterThan(0.1)
     expect(ratio).toBeLessThan(0.6)
