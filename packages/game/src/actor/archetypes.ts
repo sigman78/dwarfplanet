@@ -7,7 +7,7 @@ export const ANIMAL_DEFAULTS = {
 
 export const FISH_DEFAULTS = {
   maxHealth: 60,
-  baseMaxTicks: 400,
-  ageTicks: 100,
+  baseMaxTicks: 200,
+  ageTicks: 50,
   hungerRate: 0.004,
 }

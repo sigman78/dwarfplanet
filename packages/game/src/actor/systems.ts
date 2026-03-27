@@ -227,7 +227,7 @@ export function mateSystem(ctx: SystemContext): void {
       ctx.map.addEntity(id, pos.x, pos.y)
     }
     events.emit({ tick: worldState.tick, origin: e.id!, importance: 2, text: `mating: ${count} offspring` })
-    e.mating!.aggro = false
+    e.mating!.aggro = true
     e.actorState!.state = ActorStateEnum.Wander
     e.actorState!.timer = 20
   }
