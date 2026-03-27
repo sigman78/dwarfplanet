@@ -71,6 +71,10 @@ export function matingSeasonSystem(ctx: SystemContext): void {
 
 export function stateTransitionSystem(ctx: SystemContext): void {
   const { ecs, map } = ctx
+  const neighborById = new Map<number, { id: number; subtype: { kind: 'animal' | 'fish' }; mating: { season: boolean; aggro: boolean } }>()
+  for (const n of ecs.with('id', 'subtype', 'mating')) {
+    neighborById.set(n.id!, { id: n.id!, subtype: n.subtype!, mating: n.mating! })
+  }
   for (const e of ecs.with('actorState', 'position', 'hunger', 'subtype', 'mating', 'id')) {
     const s = e.actorState!
     s.timer--
@@ -87,7 +91,7 @@ export function stateTransitionSystem(ctx: SystemContext): void {
 
     for (const nid of nearbyIds) {
       if (nid === e.id) continue
-      const neighbor = [...ecs.with('id', 'subtype', 'mating')].find((n) => n.id === nid)
+      const neighbor = neighborById.get(nid)
       if (!neighbor || neighbor.subtype!.kind !== kind) continue
       if (e.mating!.season && neighbor.mating!.aggro) {
         rivalNearby = true
