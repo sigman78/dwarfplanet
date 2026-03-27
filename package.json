@@ -1,0 +1,18 @@
+{
+  "name": "dwarfplanet",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "test": "pnpm -r test",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-import": "^2.29.1",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  }
+}
