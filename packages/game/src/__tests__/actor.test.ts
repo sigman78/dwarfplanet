@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { GameEventsLog } from '../events'
 import { ActorStateEnum, canTransition, getNextState } from '../actor/statemachine'
 import { World } from 'miniplex'
 import type { EntityComponents } from '../actor/components'
@@ -135,5 +136,25 @@ describe('actorgen', () => {
     const ticks = actors.map((e) => e.age!.maxTicks)
     expect(ticks[0]).toBeGreaterThan(0)
     expect(ticks[0]).not.toBe(ticks[1])
+  })
+})
+
+describe('GameEventsLog', () => {
+  it('emits and retrieves events', () => {
+    const log = new GameEventsLog()
+    log.emit({ tick: 1, origin: 'global', importance: 1, text: 'test event' })
+    expect(log.getRecent(10).length).toBe(1)
+    expect(log.getRecent(10)[0].text).toBe('test event')
+  })
+
+  it('compacts when more than 5 same-type events in one tick', () => {
+    const log = new GameEventsLog()
+    for (let i = 0; i < 7; i++) {
+      log.emit({ tick: 5, origin: 'global', importance: 1, text: 'actor died' })
+    }
+    log.compact(5)
+    const events = log.getRecent(10)
+    expect(events.length).toBeLessThan(7)
+    expect(events.some((e) => e.text.includes('7'))).toBe(true)
   })
 })
