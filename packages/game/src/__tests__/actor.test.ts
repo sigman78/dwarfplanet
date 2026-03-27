@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { Processor } from '../processor'
 import { GameEventsLog } from '../events'
 import { ActorStateEnum, canTransition, getNextState } from '../actor/statemachine'
 import { World } from 'miniplex'
@@ -238,5 +239,17 @@ describe('matingSeasonSystem', () => {
     matingSeasonSystem(makeCtx(ecs, new GameMap(10, 10), new Rng(1), { season: true }))
     const e = [...ecs.with('mating')][0]
     expect(e.mating!.season).toBe(true)
+  })
+})
+
+describe('Processor', () => {
+  it('executes registered systems in order', () => {
+    const log: number[] = []
+    const p = new Processor()
+    p.register((_ctx: SystemContext) => { log.push(1) })
+    p.register((_ctx: SystemContext) => { log.push(2) })
+    const ctx = makeCtx(new World<EntityComponents>(), new GameMap(10, 10), new Rng(1))
+    p.tick(ctx)
+    expect(log).toEqual([1, 2])
   })
 })
