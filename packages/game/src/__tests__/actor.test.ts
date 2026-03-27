@@ -5,6 +5,31 @@ import { World } from 'miniplex'
 import type { EntityComponents } from '../actor/components'
 import { spawnAnimal, spawnFish } from '../actor/actorgen'
 import { Rng } from '../rng'
+import { GameMap } from '../map/map'
+import { Biome } from '../map/tiles'
+import type { WorldState, SystemContext } from '../context'
+import {
+  ageSystem,
+  hungerSystem,
+  matingSeasonSystem,
+  eatSystem,
+} from '../actor/systems'
+
+function makeCtx(ecs: World<EntityComponents>, map: GameMap, rng: Rng, worldState?: Partial<WorldState>): SystemContext {
+  return {
+    ecs,
+    map,
+    rng,
+    events: new GameEventsLog(),
+    worldState: {
+      tick: 0,
+      season: false,
+      seasonCycle: 100,
+      nextSeasonTick: 100,
+      ...worldState,
+    },
+  }
+}
 
 describe('state machine transitions', () => {
   it('Wander → Seek when hungry and food nearby', () => {
@@ -156,5 +181,62 @@ describe('GameEventsLog', () => {
     const events = log.getRecent(10)
     expect(events.length).toBeLessThan(7)
     expect(events.some((e) => e.text.includes('7'))).toBe(true)
+  })
+})
+
+describe('ageSystem', () => {
+  it('removes entity that reached maxTicks', () => {
+    const ecs = new World<EntityComponents>()
+    spawnAnimal(ecs, { x: 0, y: 0 }, new Rng(1), 1)
+    const e = [...ecs.with('age')][0]
+    e.age!.ticks = e.age!.maxTicks
+    const map = new GameMap(10, 10)
+    ageSystem(makeCtx(ecs, map, new Rng(1)))
+    expect([...ecs.with('age')].length).toBe(0)
+  })
+})
+
+describe('hungerSystem', () => {
+  it('removes entity at hunger >= 1', () => {
+    const ecs = new World<EntityComponents>()
+    spawnAnimal(ecs, { x: 0, y: 0 }, new Rng(1), 1)
+    const e = [...ecs.with('hunger')][0]
+    e.hunger!.value = 1.0
+    hungerSystem(makeCtx(ecs, new GameMap(10, 10), new Rng(1)))
+    expect([...ecs.with('hunger')].length).toBe(0)
+  })
+
+  it('increments hunger each tick', () => {
+    const ecs = new World<EntityComponents>()
+    spawnAnimal(ecs, { x: 0, y: 0 }, new Rng(1), 1)
+    const before = [...ecs.with('hunger')][0].hunger!.value
+    hungerSystem(makeCtx(ecs, new GameMap(10, 10), new Rng(1)))
+    const after = [...ecs.with('hunger')][0].hunger!.value
+    expect(after).toBeGreaterThan(before)
+  })
+})
+
+describe('eatSystem', () => {
+  it('resets hunger when actor is on food biome', () => {
+    const ecs = new World<EntityComponents>()
+    const rng = new Rng(1)
+    spawnAnimal(ecs, { x: 5, y: 5 }, rng, 1)
+    const map = new GameMap(10, 10)
+    map.setBiome(5, 5, Biome.Grassland)
+    const e = [...ecs.with('hunger', 'actorState')][0]
+    e.hunger!.value = 0.8
+    e.actorState!.state = ActorStateEnum.Eat
+    eatSystem(makeCtx(ecs, map, rng))
+    expect(e.hunger!.value).toBeLessThan(0.2)
+  })
+})
+
+describe('matingSeasonSystem', () => {
+  it('sets season flag on actors when world season is active', () => {
+    const ecs = new World<EntityComponents>()
+    spawnAnimal(ecs, { x: 0, y: 0 }, new Rng(1), 1)
+    matingSeasonSystem(makeCtx(ecs, new GameMap(10, 10), new Rng(1), { season: true }))
+    const e = [...ecs.with('mating')][0]
+    expect(e.mating!.season).toBe(true)
   })
 })
