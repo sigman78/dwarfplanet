@@ -1,0 +1,22 @@
+{
+  "name": "@dp/game",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "tsx src/cli/verify.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "miniplex": "^2.0.0",
+    "pure-rand": "^6.1.0",
+    "simplex-noise": "^4.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.16.2",
+    "vitest": "^1.6.0"
+  }
+}
