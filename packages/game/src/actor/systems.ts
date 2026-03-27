@@ -7,7 +7,6 @@ import { getNextStep } from '../map/navigation'
 import type { EntityComponents } from './components'
 
 const SEARCH_RADIUS = 3
-let nextId = 10_000
 
 function isLandActor(kind: 'animal' | 'fish'): boolean {
   return kind === 'animal'
@@ -218,7 +217,7 @@ export function mateSystem(ctx: SystemContext): void {
     if (e.actorState!.state !== ActorStateEnum.Mate) continue
     const count = rng.int(1, 3)
     for (let i = 0; i < count; i++) {
-      const id = ++nextId
+      const id = ++ctx.worldState.nextEntityId
       const pos = {
         x: ctx.map.wrapX(e.position!.x + rng.int(-2, 2)),
         y: Math.max(0, Math.min(ctx.map.height - 1, e.position!.y + rng.int(-2, 2))),

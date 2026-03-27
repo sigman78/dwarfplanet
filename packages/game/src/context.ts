@@ -9,6 +9,7 @@ export type WorldState = {
   season: boolean
   seasonCycle: number
   nextSeasonTick: number
+  nextEntityId: number
 }
 
 export type SystemContext = {

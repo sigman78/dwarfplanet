@@ -34,7 +34,6 @@ export class GameWorld {
   readonly events: GameEventsLog
   private readonly processor: Processor
   private worldState: WorldState
-  private nextEntityId = 1
 
   constructor(rng: Rng, config: WorldConfig = {}) {
     const width = config.width ?? 1024
@@ -49,6 +48,7 @@ export class GameWorld {
       season: false,
       seasonCycle: config.seasonCycle ?? 200,
       nextSeasonTick: config.seasonCycle ?? 200,
+      nextEntityId: 1,
     }
 
     generateMap(this.map, rng)
@@ -62,7 +62,7 @@ export class GameWorld {
       const x = rng.int(0, this.map.width - 1)
       const y = rng.int(0, this.map.height - 1)
       if (this.map.isPassable(x, y, true)) {
-        const id = this.nextEntityId++
+        const id = this.worldState.nextEntityId++
         spawnAnimal(this.ecs, { x, y }, rng, id)
         this.map.addEntity(id, x, y)
         placed++
@@ -73,7 +73,7 @@ export class GameWorld {
       const x = rng.int(0, this.map.width - 1)
       const y = rng.int(0, this.map.height - 1)
       if (this.map.isPassable(x, y, false)) {
-        const id = this.nextEntityId++
+        const id = this.worldState.nextEntityId++
         spawnFish(this.ecs, { x, y }, rng, id)
         this.map.addEntity(id, x, y)
         placed++
@@ -119,13 +119,17 @@ export class GameWorld {
   }
 
   getState() {
-    const animals = [...this.ecs.with('subtype')].filter((e) => e.subtype!.kind === 'animal')
-    const fish = [...this.ecs.with('subtype')].filter((e) => e.subtype!.kind === 'fish')
+    let animalCount = 0
+    let fishCount = 0
+    for (const e of this.ecs.with('subtype')) {
+      if (e.subtype!.kind === 'animal') animalCount++
+      else fishCount++
+    }
     return {
       tick: this.worldState.tick,
       season: this.worldState.season,
-      animalCount: animals.length,
-      fishCount: fish.length,
+      animalCount,
+      fishCount,
     }
   }
 }

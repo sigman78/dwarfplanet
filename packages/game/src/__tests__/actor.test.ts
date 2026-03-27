@@ -27,6 +27,7 @@ function makeCtx(ecs: World<EntityComponents>, map: GameMap, rng: Rng, worldStat
       season: false,
       seasonCycle: 100,
       nextSeasonTick: 100,
+      nextEntityId: 10_000,
       ...worldState,
     },
   }
