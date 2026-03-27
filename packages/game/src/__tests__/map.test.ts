@@ -8,6 +8,8 @@ import {
   FISH_FOOD_BIOMES,
 } from '../map/tiles'
 import { GameMap } from '../map/map'
+import { generateMap } from '../map/mapgen'
+import { Rng } from '../rng'
 
 describe('tiles', () => {
   it('every biome has a glyph', () => {
@@ -88,5 +90,43 @@ describe('GameMap', () => {
     const found = map.getEntitiesInRadius(0, 0, 3)
     expect(found.has(1)).toBe(true)
     expect(found.has(2)).toBe(false)
+  })
+})
+
+describe('generateMap', () => {
+  it('fills all tiles (no tile stays at default 0/Water if map has land)', () => {
+    const map = new GameMap(64, 32)
+    const rng = new Rng(42)
+    generateMap(map, rng)
+    const biomeCounts = new Set(map.biomes)
+    expect(biomeCounts.size).toBeGreaterThan(3)
+  })
+
+  it('produces water at expected proportion (roughly 20-50%)', () => {
+    const map = new GameMap(64, 32)
+    generateMap(map, new Rng(42))
+    const waterCount = Array.from(map.biomes).filter((b) => b === Biome.Water).length
+    const ratio = waterCount / (64 * 32)
+    expect(ratio).toBeGreaterThan(0.1)
+    expect(ratio).toBeLessThan(0.6)
+  })
+
+  it('is deterministic with same seed', () => {
+    const m1 = new GameMap(32, 16)
+    const m2 = new GameMap(32, 16)
+    generateMap(m1, new Rng(7))
+    generateMap(m2, new Rng(7))
+    expect(Array.from(m1.biomes)).toEqual(Array.from(m2.biomes))
+  })
+
+  it('poles are colder than equator', () => {
+    const map = new GameMap(64, 64)
+    generateMap(map, new Rng(1))
+    const equatorBiomes = Array.from({ length: 64 }, (_, x) => map.getBiome(x, 32))
+    const poleBiomes = Array.from({ length: 64 }, (_, x) => map.getBiome(x, 0))
+    const coldBiomes = new Set([Biome.Tundra, Biome.BorealForest, Biome.Snowfield])
+    const poleColdsCount = poleBiomes.filter((b) => coldBiomes.has(b)).length
+    const equatorColdsCount = equatorBiomes.filter((b) => coldBiomes.has(b)).length
+    expect(poleColdsCount).toBeGreaterThan(equatorColdsCount)
   })
 })
