@@ -18,9 +18,9 @@ function parseArgs(): { ticks: number; seed: number; width: number; height: numb
 
 function buildActorMap(game: Game): Map<string, 'animal' | 'fish'> {
   const actorMap = new Map<string, 'animal' | 'fish'>()
-  for (const e of game.world.ecs.with('position', 'subtype')) {
+  for (const e of game.world.ecs.with('position', 'kind')) {
     const key = `${e.position!.x},${e.position!.y}`
-    if (e.subtype!.kind === 'fish') {
+    if (e.kind === 'fish') {
       if (!actorMap.has(key)) actorMap.set(key, 'fish')
     } else {
       actorMap.set(key, 'animal')
@@ -51,8 +51,8 @@ function renderMapWithActors(game: Game, width: number, height: number, seed: nu
 
 function getStateCounts(game: Game): Record<string, number> {
   const counts: Record<string, number> = {}
-  for (const e of game.world.ecs.with('actorState')) {
-    const state = e.actorState!.state as string
+  for (const e of game.world.ecs.with('behaviorState')) {
+    const state = e.behaviorState!.state as string
     counts[state] = (counts[state] ?? 0) + 1
   }
   return counts
@@ -64,8 +64,8 @@ function formatStateCounts(counts: Record<string, number>): string {
 }
 
 function findSpotlightId(game: Game): number | null {
-  for (const e of game.world.ecs.with('id', 'subtype')) {
-    if (e.subtype!.kind === 'animal') return e.id!
+  for (const e of game.world.ecs.with('id', 'kind')) {
+    if (e.kind === 'animal') return e.id!
   }
   return null
 }
@@ -74,7 +74,7 @@ function getSpotlightInfo(
   game: Game,
   id: number,
 ): { x: number; y: number; hunger: number; ageTicks: number; maxTicks: number; state: string } | null {
-  for (const e of game.world.ecs.with('id', 'position', 'hunger', 'age', 'actorState')) {
+  for (const e of game.world.ecs.with('id', 'position', 'hunger', 'age', 'behaviorState')) {
     if (e.id === id) {
       return {
         x: e.position!.x,
@@ -82,7 +82,7 @@ function getSpotlightInfo(
         hunger: e.hunger!.value,
         ageTicks: e.age!.ticks,
         maxTicks: e.age!.maxTicks,
-        state: e.actorState!.state as string,
+        state: e.behaviorState!.state as string,
       }
     }
   }
