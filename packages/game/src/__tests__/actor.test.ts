@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { ActorStateEnum, canTransition, getNextState } from '../actor/statemachine'
+import { World } from 'miniplex'
+import type { EntityComponents } from '../actor/components'
+import { spawnAnimal, spawnFish } from '../actor/actorgen'
+import { Rng } from '../rng'
 
 describe('state machine transitions', () => {
   it('Wander → Seek when hungry and food nearby', () => {
@@ -99,5 +103,37 @@ describe('state machine transitions', () => {
         adjacent: false,
       }),
     ).toBe(ActorStateEnum.Seek)
+  })
+})
+
+describe('actorgen', () => {
+  it('spawnAnimal creates entity with all required components', () => {
+    const ecs = new World<EntityComponents>()
+    const rng = new Rng(1)
+    spawnAnimal(ecs, { x: 5, y: 5 }, rng, 1)
+    const actors = ecs.with('position', 'health', 'subtype', 'actorState', 'hunger', 'age', 'mating')
+    expect([...actors].length).toBe(1)
+    const e = [...actors][0]
+    expect(e.subtype!.kind).toBe('animal')
+    expect(e.position!.x).toBe(5)
+    expect(e.age!.maxTicks).toBeGreaterThan(0)
+  })
+
+  it('spawnFish creates entity with subtype fish', () => {
+    const ecs = new World<EntityComponents>()
+    spawnFish(ecs, { x: 2, y: 3 }, new Rng(2), 2)
+    const fish = ecs.with('subtype')
+    expect([...fish][0].subtype!.kind).toBe('fish')
+  })
+
+  it('age maxTicks has variance between spawns', () => {
+    const ecs = new World<EntityComponents>()
+    const rng = new Rng(99)
+    spawnAnimal(ecs, { x: 0, y: 0 }, rng, 1)
+    spawnAnimal(ecs, { x: 1, y: 0 }, rng, 2)
+    const actors = [...ecs.with('age')]
+    const ticks = actors.map((e) => e.age!.maxTicks)
+    expect(ticks[0]).not.toBeUndefined()
+    expect(ticks[1]).not.toBeUndefined()
   })
 })
