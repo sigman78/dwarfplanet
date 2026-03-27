@@ -87,10 +87,11 @@ export function stateTransitionSystem(ctx: SystemContext): void {
 
     for (const nid of nearbyIds) {
       if (nid === e.id) continue
-      const neighbor = [...ecs.with('id', 'subtype')].find((n) => n.id === nid)
-      if (!neighbor) continue
-      if (neighbor.subtype!.kind === kind) {
-        if (e.mating!.season) rivalNearby = true
+      const neighbor = [...ecs.with('id', 'subtype', 'mating')].find((n) => n.id === nid)
+      if (!neighbor || neighbor.subtype!.kind !== kind) continue
+      if (e.mating!.season && neighbor.mating!.aggro) {
+        rivalNearby = true
+      } else {
         partnerNearby = true
       }
     }
@@ -110,6 +111,9 @@ export function stateTransitionSystem(ctx: SystemContext): void {
     })
 
     if (next !== s.state) {
+      if (s.state === ActorStateEnum.Migrate) {
+        e.migrateTarget = undefined
+      }
       s.state = next
       s.timer = 10
       if (next === ActorStateEnum.Migrate && !e.migrateTarget) {
@@ -131,7 +135,11 @@ export function wanderSystem(ctx: SystemContext): void {
     if (e.actorState!.state !== ActorStateEnum.Wander) continue
     const { x, y } = e.position!
     const isLand = isLandActor(e.subtype!.kind)
-    const order = [0, 1, 2, 3].sort(() => rng.int(0, 1) - 0.5)
+    const order = [0, 1, 2, 3]
+    for (let i = 3; i > 0; i--) {
+      const j = rng.int(0, i)
+      ;[order[i], order[j]] = [order[j], order[i]]
+    }
     for (const i of order) {
       const [dx, dy] = dirs[i]
       const nx = map.wrapX(x + dx)
@@ -224,26 +232,33 @@ export function mateSystem(ctx: SystemContext): void {
 
 export function aggroSystem(ctx: SystemContext): void {
   const { ecs, worldState, events } = ctx
-  const toRemove: EntityComponents[] = []
+
+  const byId = new Map<number, { id: number; subtype: { kind: 'animal' | 'fish' }; health: { current: number; max: number }; position?: { x: number; y: number } }>()
+  for (const e of ecs.with('id', 'subtype', 'health')) {
+    byId.set(e.id!, { id: e.id!, subtype: e.subtype!, health: e.health!, position: e.position })
+  }
+
+  const toRemoveIds = new Set<number>()
+
   for (const e of ecs.with('actorState', 'position', 'health', 'subtype', 'id', 'mating')) {
     if (e.actorState!.state !== ActorStateEnum.Aggro) continue
     const nearbyIds = ctx.map.getEntitiesInRadius(e.position!.x, e.position!.y, SEARCH_RADIUS)
     for (const nid of nearbyIds) {
       if (nid === e.id) continue
-      const rivals = [...ecs.with('id', 'subtype', 'health')].filter(
-        (n) => n.id === nid && n.subtype!.kind === e.subtype!.kind,
-      )
-      for (const rival of rivals) {
-        rival.health!.current -= 20
-        if (rival.health!.current <= 0) {
-          toRemove.push(rival)
-          events.emit({ tick: worldState.tick, origin: rival.id!, importance: 1, text: 'actor died (aggro)' })
-        }
+      const rival = byId.get(nid)
+      if (!rival || rival.subtype.kind !== e.subtype!.kind) continue
+      rival.health.current -= 20
+      if (rival.health.current <= 0 && !toRemoveIds.has(nid)) {
+        toRemoveIds.add(nid)
+        events.emit({ tick: worldState.tick, origin: nid, importance: 1, text: 'actor died (aggro)' })
       }
     }
   }
-  for (const e of toRemove) {
-    if (e.position) ctx.map.removeEntity(e.id!, e.position.x, e.position.y)
-    ecs.remove(e)
+
+  for (const e of ecs.with('id')) {
+    if (e.id !== undefined && toRemoveIds.has(e.id)) {
+      if (e.position) ctx.map.removeEntity(e.id, e.position.x, e.position.y)
+      ecs.remove(e)
+    }
   }
 }

@@ -227,7 +227,7 @@ describe('eatSystem', () => {
     e.hunger!.value = 0.8
     e.actorState!.state = ActorStateEnum.Eat
     eatSystem(makeCtx(ecs, map, rng))
-    expect(e.hunger!.value).toBeLessThan(0.2)
+    expect(e.hunger!.value).toBe(0)
   })
 })
 
