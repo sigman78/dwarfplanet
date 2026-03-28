@@ -1,24 +1,21 @@
-import { World as EcsWorld } from 'miniplex'
-import type { PawnComponents, PawnKind, Mating } from './actor/components'
+import { World as ThyseusWorld, Entity, Entities, Query } from 'thyseus'
 import { GameMap } from './map/map'
 import { generateMap } from './map/mapgen'
 import { GameEventsLog } from './events'
-import { Processor } from './processor'
-import type { PawnQueries, WorldState } from './context'
+import { WorldState } from './worldstate'
+import { Rng } from './rng'
+import { Position } from './components/position'
 import {
-  ageSystem,
-  hungerSystem,
-  matingSeasonSystem,
-  stateTransitionSystem,
-  wanderSystem,
-  seekSystem,
-  eatSystem,
-  migrateSystem,
-  mateSystem,
-  aggroSystem,
-} from './actor/systems'
-import type { Rng } from './rng'
-import { spawnAnimal, spawnFish } from './actor/actorgen'
+  AnimalHealth, AnimalHunger, AnimalAge, SpeciesRef,
+  AnimalBehaviorState, AnimalBehaviorPhase, ReproductiveState, ReproductivePhase, MigrationState,
+} from './components/animal'
+import { AnimalAwareness, AnimalSocialAwareness } from './components/perception'
+import { SPECIES_LIST, SPECIES_DEFS, getSpeciesDef } from './species/defs'
+import {
+  SetupSchedule, PrePhaseSchedule, SensingSchedule, PlanningSchedule,
+  ActingSchedule, ResolvingSchedule, registerSystems,
+} from './schedule'
+import { applyEntityUpdates } from 'thyseus'
 import type { EntityId } from './types'
 
 export type WorldConfig = {
@@ -29,119 +26,138 @@ export type WorldConfig = {
   seasonCycle?: number
 }
 
-export class GameWorld {
-  readonly ecs: EcsWorld<PawnComponents>
-  readonly map: GameMap
-  readonly events: GameEventsLog
-  private readonly processor: Processor
-  private worldState: WorldState
-  private readonly queries: PawnQueries
+function makePopulateSystem(map: GameMap, rng: Rng, animalCount: number, fishCount: number) {
+  const deerIdx = SPECIES_LIST.indexOf('deer')
+  const salmonIdx = SPECIES_LIST.indexOf('salmon')
 
-  constructor(rng: Rng, config: WorldConfig = {}) {
-    const width = config.width ?? 1024
-    const height = config.height ?? 512
-
-    this.ecs = new EcsWorld<PawnComponents>()
-    this.map = new GameMap(width, height)
-    this.events = new GameEventsLog()
-    this.processor = new Processor()
-    this.worldState = {
-      tick: 0,
-      season: false,
-      seasonCycle: config.seasonCycle ?? 200,
-      nextSeasonTick: config.seasonCycle ?? 200,
-    }
-
-    this.queries = {
-      withAge: this.ecs.with('age'),
-      withHunger: this.ecs.with('hunger', 'kind'),
-      withMating: this.ecs.with('mating'),
-      withNeighborData: this.ecs.with('kind', 'mating'),
-      withBehaviorState: this.ecs.with('behaviorState', 'position', 'kind'),
-      withBehaviorStatePosition: this.ecs.with('behaviorState', 'position', 'hunger', 'kind', 'mating'),
-      withFullPawn: this.ecs.with('behaviorState', 'position', 'hunger', 'kind'),
-      withMigrateTarget: this.ecs.with('behaviorState', 'position', 'kind', 'migrateTarget'),
-      withAggroActor: this.ecs.with('behaviorState', 'position', 'health', 'kind', 'mating'),
-      withHealth: this.ecs.with('kind', 'health'),
-    }
-
-    generateMap(this.map, rng)
-    this.populate(rng, config.animalCount ?? 20, config.fishCount ?? 15)
-    this.registerSystems()
-  }
-
-  private populate(rng: Rng, animalCount: number, fishCount: number): void {
+  function populateSystem(entities: Entities): void {
     let placed = 0
     while (placed < animalCount) {
-      const x = rng.int(0, this.map.width - 1)
-      const y = rng.int(0, this.map.height - 1)
-      if (this.map.isPassable(x, y, true)) {
-        const entity = spawnAnimal(this.ecs, { x, y }, rng)
-        this.map.addEntity(this.ecs.id(entity)! as EntityId, x, y)
+      const x = rng.int(0, map.width - 1)
+      const y = rng.int(0, map.height - 1)
+      if (map.isPassable(x, y, true)) {
+        const def = SPECIES_DEFS[SPECIES_LIST[deerIdx]]
+        const lifespan = def.baseLifespan + rng.int(-def.lifespanVariance, def.lifespanVariance)
+        const entity = entities.spawn()
+        entities.add(entity, new Position(x, y))
+        entities.add(entity, new AnimalHealth())
+        entities.add(entity, new AnimalHunger(rng.float() * 0.3))
+        entities.add(entity, new AnimalAge(0, lifespan))
+        entities.add(entity, new SpeciesRef(deerIdx))
+        entities.add(entity, new AnimalBehaviorState(AnimalBehaviorPhase.Wander, rng.int(5, 15)))
+        entities.add(entity, new ReproductiveState(ReproductivePhase.Idle, 0))
+        entities.add(entity, new MigrationState())
+        entities.add(entity, new AnimalAwareness())
+        entities.add(entity, new AnimalSocialAwareness())
+        map.addEntity(entity.id as EntityId, x, y)
         placed++
       }
     }
+
     placed = 0
     while (placed < fishCount) {
-      const x = rng.int(0, this.map.width - 1)
-      const y = rng.int(0, this.map.height - 1)
-      if (this.map.isPassable(x, y, false)) {
-        const entity = spawnFish(this.ecs, { x, y }, rng)
-        this.map.addEntity(this.ecs.id(entity)! as EntityId, x, y)
+      const x = rng.int(0, map.width - 1)
+      const y = rng.int(0, map.height - 1)
+      if (map.isPassable(x, y, false)) {
+        const def = SPECIES_DEFS[SPECIES_LIST[salmonIdx]]
+        const lifespan = def.baseLifespan + rng.int(-def.lifespanVariance, def.lifespanVariance)
+        const entity = entities.spawn()
+        entities.add(entity, new Position(x, y))
+        entities.add(entity, new AnimalHealth())
+        entities.add(entity, new AnimalHunger(rng.float() * 0.3))
+        entities.add(entity, new AnimalAge(0, lifespan))
+        entities.add(entity, new SpeciesRef(salmonIdx))
+        entities.add(entity, new AnimalBehaviorState(AnimalBehaviorPhase.Wander, rng.int(5, 15)))
+        entities.add(entity, new ReproductiveState(ReproductivePhase.Idle, 0))
+        entities.add(entity, new MigrationState())
+        entities.add(entity, new AnimalAwareness())
+        entities.add(entity, new AnimalSocialAwareness())
+        map.addEntity(entity.id as EntityId, x, y)
         placed++
       }
     }
   }
+  populateSystem.getSystemArguments = (w: ThyseusWorld) => [w.entities]
+  return populateSystem
+}
 
-  private registerSystems(): void {
-    this.processor.register(ageSystem)
-    this.processor.register(hungerSystem)
-    this.processor.register(matingSeasonSystem)
-    this.processor.register(stateTransitionSystem)
-    this.processor.register(wanderSystem)
-    this.processor.register(seekSystem)
-    this.processor.register(eatSystem)
-    this.processor.register(migrateSystem)
-    this.processor.register(mateSystem)
-    this.processor.register(aggroSystem)
+export class GameWorld {
+  readonly map: GameMap
+  readonly events: GameEventsLog
+  private readonly thyseusWorld: ThyseusWorld
+  private readonly worldState: WorldState
+  private readonly speciesRefQuery: Query<[SpeciesRef]>
+  private readonly posSpeciesQuery: Query<[Position, SpeciesRef]>
+  private readonly fullAnimalQuery: Query<[Entity, Position, AnimalHunger, AnimalAge, AnimalBehaviorState]>
+
+  private constructor(
+    map: GameMap,
+    events: GameEventsLog,
+    thyseusWorld: ThyseusWorld,
+    worldState: WorldState,
+    speciesRefQuery: Query<[SpeciesRef]>,
+    posSpeciesQuery: Query<[Position, SpeciesRef]>,
+    fullAnimalQuery: Query<[Entity, Position, AnimalHunger, AnimalAge, AnimalBehaviorState]>,
+  ) {
+    this.map = map
+    this.events = events
+    this.thyseusWorld = thyseusWorld
+    this.worldState = worldState
+    this.speciesRefQuery = speciesRefQuery
+    this.posSpeciesQuery = posSpeciesQuery
+    this.fullAnimalQuery = fullAnimalQuery
   }
 
-  step(rng: Rng): void {
-    this.worldState.tick++
-    if (this.worldState.tick >= this.worldState.nextSeasonTick) {
-      this.worldState.season = !this.worldState.season
-      this.worldState.nextSeasonTick = this.worldState.tick + this.worldState.seasonCycle
-      this.events.emit({
-        tick: this.worldState.tick,
-        origin: 'global',
-        importance: 2,
-        text: this.worldState.season ? 'mating season began' : 'mating season ended',
-      })
-    }
+  static async create(rng: Rng, config: WorldConfig = {}): Promise<GameWorld> {
+    const width = config.width ?? 1024
+    const height = config.height ?? 512
+    const seasonCycle = config.seasonCycle ?? 200
+    const animalCount = config.animalCount ?? 20
+    const fishCount = config.fishCount ?? 15
 
-    const neighborById = new Map<EntityId, { kind: PawnKind; mating: Mating }>()
-    for (const n of this.queries.withNeighborData) {
-      neighborById.set(this.ecs.id(n)! as EntityId, { kind: n.kind!, mating: n.mating! })
-    }
+    const map = new GameMap(width, height)
+    const events = new GameEventsLog()
+    const worldState = new WorldState(seasonCycle)
 
-    this.processor.tick({
-      ecs: this.ecs,
-      map: this.map,
-      rng,
-      worldState: this.worldState,
-      events: this.events,
-      queries: this.queries,
-      neighborById,
-    })
+    generateMap(map, rng)
 
-    this.events.compact(this.worldState.tick)
+    const world = new ThyseusWorld()
+    world.insertResource(map)
+    world.insertResource(events)
+    world.insertResource(worldState)
+    world.insertResource(rng)
+
+    registerSystems(world)
+
+    world.addSystems(SetupSchedule, [
+      makePopulateSystem(map, rng, animalCount, fishCount),
+      applyEntityUpdates,
+    ])
+
+    await world.prepare()
+    await world.runSchedule(SetupSchedule)
+
+    const speciesRefQuery = Query.intoArgument(world, [SpeciesRef]) as Query<[SpeciesRef]>
+    const posSpeciesQuery = Query.intoArgument(world, [Position, SpeciesRef]) as Query<[Position, SpeciesRef]>
+    const fullAnimalQuery = Query.intoArgument(world, [Entity, Position, AnimalHunger, AnimalAge, AnimalBehaviorState]) as Query<[Entity, Position, AnimalHunger, AnimalAge, AnimalBehaviorState]>
+
+    return new GameWorld(map, events, world, worldState, speciesRefQuery, posSpeciesQuery, fullAnimalQuery)
+  }
+
+  async step(): Promise<void> {
+    await this.thyseusWorld.runSchedule(PrePhaseSchedule)
+    await this.thyseusWorld.runSchedule(SensingSchedule)
+    await this.thyseusWorld.runSchedule(PlanningSchedule)
+    await this.thyseusWorld.runSchedule(ActingSchedule)
+    await this.thyseusWorld.runSchedule(ResolvingSchedule)
   }
 
   getState() {
     let animalCount = 0
     let fishCount = 0
-    for (const e of this.ecs.with('kind')) {
-      if (e.kind === 'animal') animalCount++
+    for (const [speciesRef] of this.speciesRefQuery) {
+      const def = getSpeciesDef(speciesRef.speciesId)
+      if (def.habitat === 'land') animalCount++
       else fishCount++
     }
     return {
@@ -150,5 +166,19 @@ export class GameWorld {
       animalCount,
       fishCount,
     }
+  }
+
+  iterateActors(callback: (x: number, y: number, habitat: 'land' | 'water') => void): void {
+    for (const [pos, speciesRef] of this.posSpeciesQuery) {
+      const def = getSpeciesDef(speciesRef.speciesId)
+      callback(pos.x, pos.y, def.habitat)
+    }
+  }
+
+  getEntityInfo(index: number): { x: number; y: number; hunger: number; ageTicks: number; phase: AnimalBehaviorPhase } | null {
+    for (const [entity, pos, hunger, age, bstate] of this.fullAnimalQuery) {
+      if (entity.id === index) return { x: pos.x, y: pos.y, hunger: hunger.value, ageTicks: age.ticks, phase: bstate.phase }
+    }
+    return null
   }
 }

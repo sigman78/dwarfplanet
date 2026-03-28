@@ -2,16 +2,20 @@ import { Rng } from './rng'
 import { GameWorld, type WorldConfig } from './world'
 
 export class Game {
-  private rng: Rng
   readonly world: GameWorld
 
-  constructor(seed: number, config: WorldConfig = {}) {
-    this.rng = new Rng(seed)
-    this.world = new GameWorld(this.rng, config)
+  private constructor(world: GameWorld) {
+    this.world = world
   }
 
-  step(): void {
-    this.world.step(this.rng)
+  static async create(seed: number, config: WorldConfig = {}): Promise<Game> {
+    const rng = new Rng(seed)
+    const world = await GameWorld.create(rng, config)
+    return new Game(world)
+  }
+
+  async step(): Promise<void> {
+    await this.world.step()
   }
 
   getState() {
