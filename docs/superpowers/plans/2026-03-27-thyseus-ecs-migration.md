@@ -81,7 +81,7 @@ Expected: no errors. Check `package.json` has `"thyseus": "^0.18.0"` and no `min
 cat node_modules/thyseus/dist/index.d.ts | grep -A 20 "class Entity"
 ```
 
-Look for a property like `index`, `id`, or `n`. Note it — you will use it as `EntityId` throughout. We'll call it `entity.index` in this plan; correct the name if different.
+Look for a property like `index`, `id`, or `n`. Note it — you will use it as `EntityId` throughout. We'll call it `entity.id` in this plan; correct the name if different.
 
 - [ ] **Step 3: Confirm Query.intoArgument signature**
 
@@ -118,7 +118,7 @@ function spawnSystem(entities: Entities) {
   e.add(new Pos(0, 0))
   e.add(new Vel(1, 0))
 }
-spawnSystem.getSystemArguments = (w: World) => [Entities.intoArgument(w)]
+spawnSystem.getSystemArguments = (w: World) => [w.entities]
 
 describe('thyseus sanity', () => {
   it('DI, query, entities, async step', async () => {
@@ -590,7 +590,7 @@ socialAwarenessSystem.getSystemArguments = (w: World) => [
 **Note to implementer:** `socialAwarenessSystem` needs `Entity` in the query to get entity IDs for spatial hash lookups. Once you know the Entity numeric ID property from Task 1 Step 2, rewrite this system as follows:
 
 ```ts
-// Correct implementation once Entity ID property is known (assume entity.index):
+// Correct implementation once Entity ID property is known (assume entity.id):
 export function socialAwarenessSystem(
   query: Query<[Entity, Position, AnimalSocialAwareness, SpeciesRef, ReproductiveState]>,
   map: Res<GameMap>,
@@ -599,7 +599,7 @@ export function socialAwarenessSystem(
   const snapshot = new Map<number, { speciesId: number; reproPhase: ReproductivePhase }>()
   for (const [entity, pos, , speciesRef, repro] of query) {
     void pos
-    snapshot.set(entity.index, { speciesId: speciesRef.speciesId, reproPhase: repro.phase })
+    snapshot.set(entity.id, { speciesId: speciesRef.speciesId, reproPhase: repro.phase })
   }
 
   for (const [entity, pos, awareness, speciesRef, repro] of query) {
@@ -608,7 +608,7 @@ export function socialAwarenessSystem(
     let mateNearby = false
     let threatNearby = false
     for (const nid of nearbyIds) {
-      if ((nid as unknown as number) === entity.index) continue
+      if ((nid as unknown as number) === entity.id) continue
       const neighbor = snapshot.get(nid as unknown as number)
       if (!neighbor) continue
       if (neighbor.speciesId === speciesRef.speciesId) {
@@ -921,14 +921,14 @@ wanderSystem.getSystemArguments = (w: World) => [
 ]
 ```
 
-**Note:** `map.moveEntity(entityId, ...)` requires the numeric entity ID. Add `Entity` to the query tuple and call `map.moveEntity(entity.index as EntityId, ...)`. Apply this pattern to ALL acting systems that move entities. The corrected query is:
+**Note:** `map.moveEntity(entityId, ...)` requires the numeric entity ID. Add `Entity` to the query tuple and call `map.moveEntity(entity.id as EntityId, ...)`. Apply this pattern to ALL acting systems that move entities. The corrected query is:
 
 ```ts
 Query.intoArgument(w, [Entity, Position, AnimalBehaviorState, SpeciesRef])
 // and in the loop:
 for (const [entity, pos, bstate, speciesRef] of query) {
   ...
-  map.moveEntity(entity.index as EntityId, pos.x, pos.y, nx, ny)
+  map.moveEntity(entity.id as EntityId, pos.x, pos.y, nx, ny)
   pos.x = nx; pos.y = ny
 ```
 
@@ -975,7 +975,7 @@ export function seekSystem(
     if (!target) continue
     const next = getNextStep({ x: pos.x, y: pos.y }, target, isLand, map)
     if (next.x !== pos.x || next.y !== pos.y) {
-      map.moveEntity(entity.index as EntityId, pos.x, pos.y, next.x, next.y)
+      map.moveEntity(entity.id as EntityId, pos.x, pos.y, next.x, next.y)
       pos.x = next.x
       pos.y = next.y
     }
@@ -1044,7 +1044,7 @@ export function migrationSystem(
     const target = { x: migration.targetX, y: migration.targetY }
     const next = getNextStep({ x: pos.x, y: pos.y }, target, isLand, map)
     if (next.x !== pos.x || next.y !== pos.y) {
-      map.moveEntity(entity.index as EntityId, pos.x, pos.y, next.x, next.y)
+      map.moveEntity(entity.id as EntityId, pos.x, pos.y, next.x, next.y)
       pos.x = next.x
       pos.y = next.y
     }
@@ -1108,7 +1108,7 @@ export function matingSystem(
     }
     events.emit({
       tick: worldState.tick,
-      origin: entity.index as EntityId,
+      origin: entity.id as EntityId,
       importance: 2,
       text: `mating: ${count} offspring`,
     })
@@ -1120,7 +1120,7 @@ export function matingSystem(
 }
 matingSystem.getSystemArguments = (w: World) => [
   Query.intoArgument(w, [Entity, Position, AnimalBehaviorState, ReproductiveState, SpeciesRef]),
-  Entities.intoArgument(w),
+  w.entities,
   Res.intoArgument(w, GameMap),
   Res.intoArgument(w, Rng),
   Res.intoArgument(w, GameEventsLog),
@@ -1153,8 +1153,8 @@ export function aggroSystem(
   const healthById = new Map<number, AnimalHealth>()
   const entityById = new Map<number, Entity>()
   for (const [entity, , , health] of query) {
-    healthById.set(entity.index, health)
-    entityById.set(entity.index, entity)
+    healthById.set(entity.id, health)
+    entityById.set(entity.id, entity)
   }
 
   for (const [entity, pos, bstate, , speciesRef] of query) {
@@ -1163,7 +1163,7 @@ export function aggroSystem(
     const nearbyIds = map.getEntitiesInRadius(pos.x, pos.y, def.senseRadius)
     for (const nid of nearbyIds) {
       const nidNum = nid as unknown as number
-      if (nidNum === entity.index) continue
+      if (nidNum === entity.id) continue
       const rivalHealth = healthById.get(nidNum)
       if (!rivalHealth) continue
       rivalHealth.value -= 20
@@ -1197,7 +1197,7 @@ export function aggroSystem(
 ```ts
 const posById = new Map<number, Position>()
 for (const [entity, pos] of query) {
-  posById.set(entity.index, pos)
+  posById.set(entity.id, pos)
 }
 // Then cleanup:
 const rivalPos = posById.get(nidNum)
@@ -1230,9 +1230,9 @@ export function aggroSystem(
   const entityById = new Map<number, Entity>()
 
   for (const [entity, pos, , health] of query) {
-    healthById.set(entity.index, health)
-    posById.set(entity.index, pos)
-    entityById.set(entity.index, entity)
+    healthById.set(entity.id, health)
+    posById.set(entity.id, pos)
+    entityById.set(entity.id, entity)
   }
 
   for (const [entity, pos, bstate] of query) {
@@ -1240,7 +1240,7 @@ export function aggroSystem(
     const nearbyIds = map.getEntitiesInRadius(pos.x, pos.y, 5)
     for (const nid of nearbyIds) {
       const nidNum = nid as unknown as number
-      if (nidNum === entity.index) continue
+      if (nidNum === entity.id) continue
       const rivalHealth = healthById.get(nidNum)
       if (!rivalHealth) continue
       rivalHealth.value -= AGGRO_DAMAGE
@@ -1321,8 +1321,8 @@ export function ageSystem(
     if (!entity.isAlive) continue
     age.ticks++
     if (age.ticks >= age.maxTicks) {
-      map.removeEntity(entity.index as EntityId, pos.x, pos.y)
-      events.emit({ tick: worldState.tick, origin: entity.index as EntityId, importance: 1, text: 'actor died (old age)' })
+      map.removeEntity(entity.id as EntityId, pos.x, pos.y)
+      events.emit({ tick: worldState.tick, origin: entity.id as EntityId, importance: 1, text: 'actor died (old age)' })
       entity.despawn()
     }
   }
@@ -1360,8 +1360,8 @@ export function hungerSystem(
     const def = getSpeciesDef(speciesRef.speciesId)
     hunger.value = Math.min(1, hunger.value + def.hungerRate)
     if (hunger.value >= 1) {
-      map.removeEntity(entity.index as EntityId, pos.x, pos.y)
-      events.emit({ tick: worldState.tick, origin: entity.index as EntityId, importance: 1, text: 'actor died (hunger)' })
+      map.removeEntity(entity.id as EntityId, pos.x, pos.y)
+      events.emit({ tick: worldState.tick, origin: entity.id as EntityId, importance: 1, text: 'actor died (hunger)' })
       entity.despawn()
     }
   }
@@ -1703,7 +1703,7 @@ function makePopulateSystem(map: GameMap, rng: Rng, animalCount: number, fishCou
           .add(new MigrationState())
           .add(new AnimalAwareness())
           .add(new AnimalSocialAwareness())
-        map.addEntity(entity.index as EntityId, x, y)
+        map.addEntity(entity.id as EntityId, x, y)
         placed++
       }
     }
@@ -1726,12 +1726,12 @@ function makePopulateSystem(map: GameMap, rng: Rng, animalCount: number, fishCou
           .add(new MigrationState())
           .add(new AnimalAwareness())
           .add(new AnimalSocialAwareness())
-        map.addEntity(entity.index as EntityId, x, y)
+        map.addEntity(entity.id as EntityId, x, y)
         placed++
       }
     }
   }
-  populateSystem.getSystemArguments = (w: ThyseusWorld) => [Entities.intoArgument(w)]
+  populateSystem.getSystemArguments = (w: ThyseusWorld) => [w.entities]
   return populateSystem
 }
 ```
@@ -2058,7 +2058,7 @@ For `getSpotlightInfo`: add to `GameWorld`:
 ```ts
 getEntityInfo(index: number): { x: number; y: number; hunger: number; ageTicks: number; phase: AnimalBehaviorPhase } | null {
   for (const [entity, pos, hunger, age, bstate] of this.fullAnimalQuery) {
-    if (entity.index === index) return { x: pos.x, y: pos.y, hunger: hunger.value, ageTicks: age.ticks, phase: bstate.phase }
+    if (entity.id === index) return { x: pos.x, y: pos.y, hunger: hunger.value, ageTicks: age.ticks, phase: bstate.phase }
   }
   return null
 }
@@ -2138,7 +2138,7 @@ Expected: 48+ passing, 0 failing.
 
 Common failure patterns and fixes:
 
-**"Cannot read property 'index' of undefined"** — Entity numeric ID property name is wrong. Check Task 1 Step 2 result and update all `entity.index` references.
+**"Cannot read property 'index' of undefined"** — Entity numeric ID property name is wrong. Check Task 1 Step 2 result and update all `entity.id` references.
 
 **Determinism test fails (same-seed produces different biomes/counts)** — `Rng` state is shared but `World.runSchedule` might run systems in a different order. Verify `PrePhaseSchedule → SensingSchedule → PlanningSchedule → ActingSchedule → ResolvingSchedule` order matches the old `registerSystems` order from `world.ts`.
 
