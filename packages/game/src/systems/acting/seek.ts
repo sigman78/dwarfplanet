@@ -1,35 +1,20 @@
 import type { World } from 'thyseus'
 import { Entity, Query, Res } from 'thyseus'
-import { Position, AnimalBehaviorState, AnimalBehaviorPhase, SpeciesRef } from '@/components'
-import { GameMap, BIOME_DEFS, getNextStep } from '@/map'
+import { Position, AnimalBehaviorState, AnimalBehaviorPhase, SpeciesRef, AnimalAwareness } from '@/components'
+import { GameMap, getNextStep } from '@/map'
 import { getSpeciesDef } from '@/species/defs'
 import type { EntityId } from '@/types'
 
-const SEARCH_RADIUS = 3
-
 export function seekSystem(
-  query: Query<[Entity, Position, AnimalBehaviorState, SpeciesRef]>,
+  query: Query<[Entity, Position, AnimalBehaviorState, SpeciesRef, AnimalAwareness]>,
   map: Res<GameMap>,
 ): void {
-  for (const [entity, pos, bstate, speciesRef] of query) {
+  for (const [entity, pos, bstate, speciesRef, awareness] of query) {
     if (bstate.phase !== AnimalBehaviorPhase.Seek) continue
+    if (!awareness.foodNearby) continue
     const def = getSpeciesDef(speciesRef.speciesId)
     const isLand = def.habitat === 'land'
-    let target: { x: number; y: number } | null = null
-    let bestDist = Infinity
-    for (let dy = -SEARCH_RADIUS; dy <= SEARCH_RADIUS; dy++) {
-      for (let dx = -SEARCH_RADIUS; dx <= SEARCH_RADIUS; dx++) {
-        const tx = map.wrapX(pos.x + dx)
-        const ty = Math.max(0, Math.min(map.height - 1, pos.y + dy))
-        const biome = map.getBiome(tx, ty)
-        const isFood = isLand ? BIOME_DEFS[biome].animalFood : BIOME_DEFS[biome].fishFood
-        if (isFood) {
-          const d = Math.abs(dx) + Math.abs(dy)
-          if (d < bestDist) { bestDist = d; target = { x: tx, y: ty } }
-        }
-      }
-    }
-    if (!target) continue
+    const target = { x: awareness.foodX, y: awareness.foodY }
     const next = getNextStep({ x: pos.x, y: pos.y }, target, isLand, map)
     if (next.x !== pos.x || next.y !== pos.y) {
       map.moveEntity(entity.id as EntityId, pos.x, pos.y, next.x, next.y)
@@ -39,6 +24,6 @@ export function seekSystem(
   }
 }
 seekSystem.getSystemArguments = (w: World) => [
-  Query.intoArgument(w, [Entity, Position, AnimalBehaviorState, SpeciesRef]),
+  Query.intoArgument(w, [Entity, Position, AnimalBehaviorState, SpeciesRef, AnimalAwareness]),
   Res.intoArgument(w, GameMap),
 ]
