@@ -4,11 +4,10 @@ import { Entity, Query, Res } from 'thyseus'
 import {
   AnimalBehaviorState, AnimalBehaviorPhase,
   AnimalHunger, MigrationState, ReproductiveState, ReproductivePhase,
-  SpeciesRef, AnimalAwareness, AnimalSocialAwareness, Position,
+  AnimalAwareness, AnimalSocialAwareness, Position,
 } from '@/components'
-import { GameMap, BIOME_DEFS } from '@/map'
+import { GameMap } from '@/map'
 import { Rng } from '@/rng'
-import { getSpeciesDef } from '@/species/defs'
 import { WorldState } from '@/worldstate'
 
 export type TransitionConditions = {
@@ -60,18 +59,14 @@ export function getNextPhase(
 }
 
 export function behaviorTransitionSystem(
-  query: Query<[Entity, Position, AnimalBehaviorState, AnimalHunger, MigrationState, ReproductiveState, AnimalAwareness, AnimalSocialAwareness, SpeciesRef]>,
+  query: Query<[Entity, Position, AnimalBehaviorState, AnimalHunger, MigrationState, ReproductiveState, AnimalAwareness, AnimalSocialAwareness]>,
   map: Res<GameMap>,
   rng: Res<Rng>,
   worldState: Res<WorldState>,
 ): void {
-  for (const [, pos, bstate, hunger, migration, repro, awareness, social, speciesRef] of query) {
+  for (const [, pos, bstate, hunger, migration, repro, awareness, social] of query) {
     bstate.timer--
     if (bstate.timer > 0) continue
-
-    const def = getSpeciesDef(speciesRef.speciesId)
-    const biome = map.getBiome(pos.x, pos.y)
-    const adjacentFood = def.habitat === 'land' ? BIOME_DEFS[biome].animalFood : BIOME_DEFS[biome].fishFood
 
     const atTarget = migration.active
       ? Math.abs(pos.x - migration.targetX) < 3 && Math.abs(pos.y - migration.targetY) < 3
@@ -84,7 +79,7 @@ export function behaviorTransitionSystem(
       partnerNearby: social.mateNearby && repro.phase === ReproductivePhase.Seeking,
       rivalNearby: social.threatNearby,
       atTarget,
-      adjacent: adjacentFood,
+      adjacent: awareness.canEatHere,
     })
 
     if (next !== bstate.phase) {
@@ -104,7 +99,7 @@ export function behaviorTransitionSystem(
   }
 }
 behaviorTransitionSystem.getSystemArguments = (w: World) => [
-  Query.intoArgument(w, [Entity, Position, AnimalBehaviorState, AnimalHunger, MigrationState, ReproductiveState, AnimalAwareness, AnimalSocialAwareness, SpeciesRef]),
+  Query.intoArgument(w, [Entity, Position, AnimalBehaviorState, AnimalHunger, MigrationState, ReproductiveState, AnimalAwareness, AnimalSocialAwareness]),
   Res.intoArgument(w, GameMap),
   Res.intoArgument(w, Rng),
   Res.intoArgument(w, WorldState),

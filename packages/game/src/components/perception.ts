@@ -5,6 +5,7 @@ export class AnimalAwareness {
     public foodNearby = false,
     public foodX = 0,
     public foodY = 0,
+    public canEatHere = false,
   ) {}
 }
 

@@ -14,6 +14,9 @@ export function foodAwarenessSystem(
     awareness.foodNearby = false
     awareness.foodX = 0
     awareness.foodY = 0
+    awareness.canEatHere = false
+    const currentBiome = map.getBiome(pos.x, pos.y)
+    awareness.canEatHere = def.habitat === 'land' ? BIOME_DEFS[currentBiome].animalFood : BIOME_DEFS[currentBiome].fishFood
     outer: for (let dy = -r; dy <= r; dy++) {
       for (let dx = -r; dx <= r; dx++) {
         const tx = map.wrapX(pos.x + dx)
