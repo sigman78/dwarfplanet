@@ -1,4 +1,4 @@
-import { Schedule, applyEntityUpdates } from 'thyseus'
+import { World, Schedule, applyEntityUpdates } from 'thyseus'
 import { worldTickSystem } from '@/systems/prephase'
 import { foodAwarenessSystem, socialAwarenessSystem, threatAwarenessSystem, personAwarenessSystem } from '@/systems/sensing'
 import { reproductivePhaseSystem, behaviorTransitionSystem } from '@/systems/planning'
@@ -12,7 +12,7 @@ export class PlanningSchedule extends Schedule {}
 export class ActingSchedule extends Schedule {}
 export class ResolvingSchedule extends Schedule {}
 
-export function registerSystems(world: import('thyseus').World): import('thyseus').World {
+export function registerSystems(world: World): World {
   return world
     .addSystems(PrePhaseSchedule, worldTickSystem)
     .addSystems(SensingSchedule, [
