@@ -1,6 +1,6 @@
 import { Game } from '../game'
 import { BIOME_GLYPH } from '../map/tiles'
-import type { GameEvent } from '../events'
+import { AnimalBehaviorPhase } from '../components/animal'
 
 function parseArgs(): { ticks: number; seed: number; width: number; height: number; animalCount: number; fishCount: number } {
   const args = Object.fromEntries(
@@ -18,14 +18,14 @@ function parseArgs(): { ticks: number; seed: number; width: number; height: numb
 
 function buildActorMap(game: Game): Map<string, 'animal' | 'fish'> {
   const actorMap = new Map<string, 'animal' | 'fish'>()
-  for (const e of game.world.ecs.with('position', 'kind')) {
-    const key = `${e.position!.x},${e.position!.y}`
-    if (e.kind === 'fish') {
+  game.world.iterateActors((x, y, habitat) => {
+    const key = `${x},${y}`
+    if (habitat === 'water') {
       if (!actorMap.has(key)) actorMap.set(key, 'fish')
     } else {
       actorMap.set(key, 'animal')
     }
-  }
+  })
   return actorMap
 }
 
@@ -49,41 +49,8 @@ function renderMapWithActors(game: Game, width: number, height: number, seed: nu
   }
 }
 
-function getStateCounts(game: Game): Record<string, number> {
-  const counts: Record<string, number> = {}
-  for (const e of game.world.ecs.with('behaviorState')) {
-    const state = e.behaviorState!.state as string
-    counts[state] = (counts[state] ?? 0) + 1
-  }
-  return counts
-}
-
-function formatStateCounts(counts: Record<string, number>): string {
-  const order = ['Wander', 'Seek', 'Eat', 'Migrate', 'Mate', 'Aggro']
-  return order.map((s) => `${s}:${counts[s] ?? 0}`).join(' ')
-}
-
-function findSpotlightId(game: Game): number | null {
-  for (const e of game.world.ecs.with('kind')) {
-    if (e.kind === 'animal') return game.world.ecs.id(e) ?? null
-  }
-  return null
-}
-
-function getSpotlightInfo(
-  game: Game,
-  id: number,
-): { x: number; y: number; hunger: number; ageTicks: number; maxTicks: number; state: string } | null {
-  const e = game.world.ecs.entity(id)
-  if (!e || !e.position || !e.hunger || !e.age || !e.behaviorState) return null
-  return {
-    x: e.position.x,
-    y: e.position.y,
-    hunger: e.hunger.value,
-    ageTicks: e.age.ticks,
-    maxTicks: e.age.maxTicks,
-    state: e.behaviorState.state as string,
-  }
+function phaseLabel(phase: AnimalBehaviorPhase): string {
+  return AnimalBehaviorPhase[phase] ?? String(phase)
 }
 
 function countDeaths(events: Array<{ text: string }>, cause: string): number {
@@ -101,13 +68,21 @@ function countDeaths(events: Array<{ text: string }>, cause: string): number {
   return total
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const { ticks, seed, width, height, animalCount, fishCount } = parseArgs()
-  const game = new Game(seed, { width, height, animalCount, fishCount })
+  const game = await Game.create(seed, { width, height, animalCount, fishCount })
 
   renderMapWithActors(game, width, height, seed)
 
-  const spotlightId = findSpotlightId(game)
+  let spotlightId: number | null = null
+  game.world.iterateActors((x, y, habitat) => {
+    if (spotlightId === null && habitat === 'land') {
+      const snapshot = game.world.snapshotActors()
+      const match = snapshot.find((a) => a.x === x && a.y === y)
+      if (match) spotlightId = match.id
+    }
+  })
+
   if (spotlightId !== null) {
     console.log(`spotlight: animal #${spotlightId}`)
   }
@@ -117,22 +92,20 @@ function main(): void {
   let lastPrintTick = -1
 
   for (let t = 0; t <= ticks; t++) {
-    if (t > 0) game.step()
+    if (t > 0) await game.step()
 
     const state = game.getState()
 
     if (t % PRINT_EVERY === 0) {
-      const counts = getStateCounts(game)
-      const stateStr = formatStateCounts(counts)
       console.log(
-        `tick=${String(state.tick).padEnd(5)} animals=${String(state.animalCount).padEnd(4)} fish=${String(state.fishCount).padEnd(4)} | ${stateStr}`,
+        `tick=${String(state.tick).padEnd(5)} animals=${String(state.animalCount).padEnd(4)} fish=${String(state.fishCount).padEnd(4)} | [state counts not available]`,
       )
 
       if (spotlightId !== null) {
-        const info = getSpotlightInfo(game, spotlightId)
+        const info = game.world.getEntityInfo(spotlightId)
         if (info) {
           console.log(
-            `  spotlight #${spotlightId}  pos=(${info.x},${info.y}) hunger=${info.hunger.toFixed(2)} age=${info.ageTicks}/${info.maxTicks} state=${info.state}`,
+            `  spotlight #${spotlightId}  pos=(${info.x},${info.y}) hunger=${info.hunger.toFixed(2)} age=${info.ageTicks} phase=${phaseLabel(info.phase)}`,
           )
         } else {
           console.log(`  spotlight #${spotlightId}  (died)`)
