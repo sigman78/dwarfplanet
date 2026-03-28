@@ -1,0 +1,5 @@
+export * from './animal'
+export * from './perception'
+export * from './position'
+export * from './person'
+export * from './things'

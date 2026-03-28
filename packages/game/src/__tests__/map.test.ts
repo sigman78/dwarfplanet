@@ -6,11 +6,11 @@ import {
   FISH_PASSABLE_BIOMES,
   ANIMAL_FOOD_BIOMES,
   FISH_FOOD_BIOMES,
-} from '../map/tiles'
-import { GameMap } from '../map/map'
-import type { EntityId } from '../types'
-import { generateMap } from '../map/mapgen'
-import { Rng } from '../rng'
+  GameMap,
+  generateMap,
+} from '@/map'
+import type { EntityId } from '@/types'
+import { Rng } from '@/rng'
 
 describe('tiles', () => {
   it('every biome has a glyph', () => {

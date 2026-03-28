@@ -1,12 +1,9 @@
 import type { World } from 'thyseus'
 import { Entity, Query, Res } from 'thyseus'
-import { Position } from '../../components/position'
-import { AnimalBehaviorState, AnimalBehaviorPhase, SpeciesRef } from '../../components/animal'
-import { GameMap } from '../../map/map'
-import { BIOME_DEFS } from '../../map/tiles'
-import { getNextStep } from '../../map/navigation'
-import { getSpeciesDef } from '../../species/defs'
-import type { EntityId } from '../../types'
+import { Position, AnimalBehaviorState, AnimalBehaviorPhase, SpeciesRef } from '@/components'
+import { GameMap, BIOME_DEFS, getNextStep } from '@/map'
+import { getSpeciesDef } from '@/species/defs'
+import type { EntityId } from '@/types'
 
 const SEARCH_RADIUS = 3
 

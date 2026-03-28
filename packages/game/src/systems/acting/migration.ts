@@ -1,11 +1,9 @@
 import type { World } from 'thyseus'
 import { Entity, Query, Res } from 'thyseus'
-import { Position } from '../../components/position'
-import { AnimalBehaviorState, AnimalBehaviorPhase, MigrationState, SpeciesRef } from '../../components/animal'
-import { GameMap } from '../../map/map'
-import { getNextStep } from '../../map/navigation'
-import { getSpeciesDef } from '../../species/defs'
-import type { EntityId } from '../../types'
+import { Position, AnimalBehaviorState, AnimalBehaviorPhase, MigrationState, SpeciesRef } from '@/components'
+import { GameMap, getNextStep } from '@/map'
+import { getSpeciesDef } from '@/species/defs'
+import type { EntityId } from '@/types'
 
 export function migrationSystem(
   query: Query<[Entity, Position, AnimalBehaviorState, MigrationState, SpeciesRef]>,

@@ -4,15 +4,12 @@ import { Entity, Query, Res } from 'thyseus'
 import {
   AnimalBehaviorState, AnimalBehaviorPhase,
   AnimalHunger, MigrationState, ReproductiveState, ReproductivePhase,
-  SpeciesRef,
-} from '../../components/animal'
-import { AnimalAwareness, AnimalSocialAwareness } from '../../components/perception'
-import { Position } from '../../components/position'
-import { GameMap } from '../../map/map'
-import { Rng } from '../../rng'
-import { BIOME_DEFS } from '../../map/tiles'
-import { getSpeciesDef } from '../../species/defs'
-import { WorldState } from '../../worldstate'
+  SpeciesRef, AnimalAwareness, AnimalSocialAwareness, Position,
+} from '@/components'
+import { GameMap, BIOME_DEFS } from '@/map'
+import { Rng } from '@/rng'
+import { getSpeciesDef } from '@/species/defs'
+import { WorldState } from '@/worldstate'
 
 export type TransitionConditions = {
   hunger: number

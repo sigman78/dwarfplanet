@@ -1,8 +1,8 @@
 // packages/game/src/systems/planning/reproductivePhase.ts
 import type { World } from 'thyseus'
 import { Entity, Query, Res } from 'thyseus'
-import { ReproductiveState, ReproductivePhase } from '../../components/animal'
-import { WorldState } from '../../worldstate'
+import { ReproductiveState, ReproductivePhase } from '@/components'
+import { WorldState } from '@/worldstate'
 
 export function reproductivePhaseSystem(
   query: Query<[Entity, ReproductiveState]>,

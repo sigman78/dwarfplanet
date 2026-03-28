@@ -1,11 +1,10 @@
 import type { World } from 'thyseus'
 import { Entity, Query, Res } from 'thyseus'
-import { Position } from '../../components/position'
-import { AnimalBehaviorState, AnimalBehaviorPhase, SpeciesRef } from '../../components/animal'
-import { GameMap } from '../../map/map'
-import { Rng } from '../../rng'
-import { getSpeciesDef } from '../../species/defs'
-import type { EntityId } from '../../types'
+import { Position, AnimalBehaviorState, AnimalBehaviorPhase, SpeciesRef } from '@/components'
+import { GameMap } from '@/map'
+import { Rng } from '@/rng'
+import { getSpeciesDef } from '@/species/defs'
+import type { EntityId } from '@/types'
 
 const DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]] as const
 

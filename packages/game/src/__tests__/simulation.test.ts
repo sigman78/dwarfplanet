@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { Game } from '../game'
-import { AnimalBehaviorPhase } from '../components/animal'
+import { Game } from '@/game'
+import { AnimalBehaviorPhase } from '@/components'
 
 describe('simulation integration', () => {
   it('runs 200 ticks without population extinction or explosion', async () => {

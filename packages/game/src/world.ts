@@ -1,22 +1,21 @@
 import { World as ThyseusWorld, Entity, Entities, Query } from 'thyseus'
-import { GameMap } from './map/map'
-import { generateMap } from './map/mapgen'
-import { GameEventsLog } from './events'
-import { WorldState } from './worldstate'
-import { Rng } from './rng'
-import { Position } from './components/position'
+import { GameMap, generateMap } from '@/map'
+import { GameEventsLog } from '@/events'
+import { WorldState } from '@/worldstate'
+import { Rng } from '@/rng'
 import {
+  Position,
   AnimalHealth, AnimalHunger, AnimalAge, SpeciesRef,
   AnimalBehaviorState, AnimalBehaviorPhase, ReproductiveState, ReproductivePhase, MigrationState,
-} from './components/animal'
-import { AnimalAwareness, AnimalSocialAwareness } from './components/perception'
-import { SPECIES_LIST, SPECIES_DEFS, getSpeciesDef } from './species/defs'
+  AnimalAwareness, AnimalSocialAwareness,
+} from '@/components'
+import { SPECIES_LIST, SPECIES_DEFS, getSpeciesDef } from '@/species/defs'
 import {
   SetupSchedule, PrePhaseSchedule, SensingSchedule, PlanningSchedule,
   ActingSchedule, ResolvingSchedule, registerSystems,
-} from './schedule'
+} from '@/schedule'
 import { applyEntityUpdates } from 'thyseus'
-import type { EntityId } from './types'
+import type { EntityId } from '@/types'
 
 export type WorldConfig = {
   width?: number

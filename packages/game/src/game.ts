@@ -1,5 +1,5 @@
-import { Rng } from './rng'
-import { GameWorld, type WorldConfig } from './world'
+import { Rng } from '@/rng'
+import { GameWorld, type WorldConfig } from '@/world'
 
 export class Game {
   readonly world: GameWorld

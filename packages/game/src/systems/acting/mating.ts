@@ -1,17 +1,17 @@
 import type { World } from 'thyseus'
 import { Entities, Entity, Query, Res } from 'thyseus'
-import { Position } from '../../components/position'
 import {
+  Position,
   AnimalBehaviorState, AnimalBehaviorPhase, AnimalHunger, AnimalAge,
   AnimalHealth, ReproductiveState, ReproductivePhase, MigrationState, SpeciesRef,
-} from '../../components/animal'
-import { AnimalAwareness, AnimalSocialAwareness } from '../../components/perception'
-import { GameMap } from '../../map/map'
-import { Rng } from '../../rng'
-import { GameEventsLog } from '../../events'
-import { WorldState } from '../../worldstate'
-import { getSpeciesDef } from '../../species/defs'
-import type { EntityId } from '../../types'
+  AnimalAwareness, AnimalSocialAwareness,
+} from '@/components'
+import { GameMap } from '@/map'
+import { Rng } from '@/rng'
+import { GameEventsLog } from '@/events'
+import { WorldState } from '@/worldstate'
+import { getSpeciesDef } from '@/species/defs'
+import type { EntityId } from '@/types'
 
 export function matingSystem(
   query: Query<[Entity, Position, AnimalBehaviorState, ReproductiveState, SpeciesRef]>,

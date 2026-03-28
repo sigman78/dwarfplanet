@@ -1,11 +1,9 @@
 import type { World } from 'thyseus'
 import { Entity, Query, Res } from 'thyseus'
-import { Position } from '../../components/position'
-import { AnimalSocialAwareness } from '../../components/perception'
-import { SpeciesRef, ReproductiveState, ReproductivePhase } from '../../components/animal'
-import { GameMap } from '../../map/map'
-import { getSpeciesDef } from '../../species/defs'
-import type { EntityId } from '../../types'
+import { Position, AnimalSocialAwareness, SpeciesRef, ReproductiveState, ReproductivePhase } from '@/components'
+import { GameMap } from '@/map'
+import { getSpeciesDef } from '@/species/defs'
+import type { EntityId } from '@/types'
 
 export function socialAwarenessSystem(
   query: Query<[Entity, Position, AnimalSocialAwareness, SpeciesRef, ReproductiveState]>,

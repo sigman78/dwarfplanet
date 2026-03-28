@@ -1,12 +1,11 @@
 import type { World } from 'thyseus'
 import { Entity, Query, Res } from 'thyseus'
-import { Position } from '../../components/position'
-import { AnimalHunger, SpeciesRef } from '../../components/animal'
-import { GameMap } from '../../map/map'
-import { GameEventsLog } from '../../events'
-import { WorldState } from '../../worldstate'
-import { getSpeciesDef } from '../../species/defs'
-import type { EntityId } from '../../types'
+import { Position, AnimalHunger, SpeciesRef } from '@/components'
+import { GameMap } from '@/map'
+import { GameEventsLog } from '@/events'
+import { WorldState } from '@/worldstate'
+import { getSpeciesDef } from '@/species/defs'
+import type { EntityId } from '@/types'
 
 export function hungerSystem(
   query: Query<[Entity, Position, AnimalHunger, SpeciesRef]>,

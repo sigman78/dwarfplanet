@@ -1,10 +1,9 @@
 // packages/game/src/__tests__/actor.test.ts
 import { describe, it, expect } from 'vitest'
-import { canTransition, getNextPhase } from '../systems/planning/behaviorTransition'
-import type { TransitionConditions } from '../systems/planning/behaviorTransition'
-import { AnimalBehaviorPhase } from '../components/animal'
-import { GameEventsLog } from '../events'
-import { Game } from '../game'
+import { canTransition, getNextPhase, type TransitionConditions } from '@/systems/planning'
+import { AnimalBehaviorPhase } from '@/components'
+import { GameEventsLog } from '@/events'
+import { Game } from '@/game'
 
 // ─── State machine (pure functions, no async needed) ──────────────────────────
 

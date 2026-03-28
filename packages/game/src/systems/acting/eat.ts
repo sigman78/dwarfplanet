@@ -1,10 +1,8 @@
 import type { World } from 'thyseus'
 import { Entity, Query, Res } from 'thyseus'
-import { Position } from '../../components/position'
-import { AnimalBehaviorState, AnimalBehaviorPhase, AnimalHunger, SpeciesRef } from '../../components/animal'
-import { GameMap } from '../../map/map'
-import { BIOME_DEFS } from '../../map/tiles'
-import { getSpeciesDef } from '../../species/defs'
+import { Position, AnimalBehaviorState, AnimalBehaviorPhase, AnimalHunger, SpeciesRef } from '@/components'
+import { GameMap, BIOME_DEFS } from '@/map'
+import { getSpeciesDef } from '@/species/defs'
 
 export function eatSystem(
   query: Query<[Entity, Position, AnimalBehaviorState, AnimalHunger, SpeciesRef]>,

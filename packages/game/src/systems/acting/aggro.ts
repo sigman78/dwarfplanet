@@ -1,11 +1,10 @@
 import type { World } from 'thyseus'
 import { Entity, Query, Res } from 'thyseus'
-import { Position } from '../../components/position'
-import { AnimalBehaviorState, AnimalBehaviorPhase, AnimalHealth } from '../../components/animal'
-import { GameMap } from '../../map/map'
-import { GameEventsLog } from '../../events'
-import { WorldState } from '../../worldstate'
-import type { EntityId } from '../../types'
+import { Position, AnimalBehaviorState, AnimalBehaviorPhase, AnimalHealth } from '@/components'
+import { GameMap } from '@/map'
+import { GameEventsLog } from '@/events'
+import { WorldState } from '@/worldstate'
+import type { EntityId } from '@/types'
 
 const AGGRO_DAMAGE = 20
 

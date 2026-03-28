@@ -1,11 +1,10 @@
 import type { World } from 'thyseus'
 import { Entity, Query, Res } from 'thyseus'
-import { Position } from '../../components/position'
-import { AnimalAge } from '../../components/animal'
-import { GameMap } from '../../map/map'
-import { GameEventsLog } from '../../events'
-import { WorldState } from '../../worldstate'
-import type { EntityId } from '../../types'
+import { Position, AnimalAge } from '@/components'
+import { GameMap } from '@/map'
+import { GameEventsLog } from '@/events'
+import { WorldState } from '@/worldstate'
+import type { EntityId } from '@/types'
 
 export function ageSystem(
   query: Query<[Entity, Position, AnimalAge]>,

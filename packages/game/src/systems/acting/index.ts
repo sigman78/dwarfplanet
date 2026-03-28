@@ -1,0 +1,7 @@
+export * from './wander'
+export * from './seek'
+export * from './eat'
+export * from './migration'
+export * from './mating'
+export * from './aggro'
+export * from './personAct'

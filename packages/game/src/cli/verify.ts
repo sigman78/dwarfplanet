@@ -1,6 +1,6 @@
-import { Game } from '../game'
-import { BIOME_GLYPH } from '../map/tiles'
-import { AnimalBehaviorPhase } from '../components/animal'
+import { Game } from '@/game'
+import { BIOME_GLYPH } from '@/map'
+import { AnimalBehaviorPhase } from '@/components'
 
 function parseArgs(): { ticks: number; seed: number; width: number; height: number; animalCount: number; fishCount: number } {
   const args = Object.fromEntries(
