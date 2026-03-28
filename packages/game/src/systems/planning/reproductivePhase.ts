@@ -1,14 +1,14 @@
 // packages/game/src/systems/planning/reproductivePhase.ts
 import type { World } from 'thyseus'
-import { Query, Res } from 'thyseus'
+import { Entity, Query, Res } from 'thyseus'
 import { ReproductiveState, ReproductivePhase } from '../../components/animal'
 import { WorldState } from '../../worldstate'
 
 export function reproductivePhaseSystem(
-  query: Query<[ReproductiveState]>,
+  query: Query<[Entity, ReproductiveState]>,
   worldState: Res<WorldState>,
 ): void {
-  for (const [repro] of query) {
+  for (const [, repro] of query) {
     if (repro.timer > 0) {
       repro.timer--
     }
@@ -26,6 +26,6 @@ export function reproductivePhaseSystem(
   }
 }
 reproductivePhaseSystem.getSystemArguments = (w: World) => [
-  Query.intoArgument(w, [ReproductiveState]),
+  Query.intoArgument(w, [Entity, ReproductiveState]),
   Res.intoArgument(w, WorldState),
 ]

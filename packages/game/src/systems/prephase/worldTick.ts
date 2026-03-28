@@ -4,6 +4,7 @@ import { WorldState } from '../../worldstate'
 import { GameEventsLog } from '../../events'
 
 export function worldTickSystem(state: WorldState, events: GameEventsLog): void {
+  state.despawnedThisTick.clear()
   state.tick++
   if (state.tick >= state.nextSeasonTick) {
     state.season = !state.season

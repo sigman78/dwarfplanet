@@ -4,6 +4,7 @@ export class WorldState {
   season = false
   seasonCycle: number
   nextSeasonTick: number
+  despawnedThisTick: Set<number> = new Set()
 
   constructor(seasonCycle = 200) {
     this.seasonCycle = seasonCycle

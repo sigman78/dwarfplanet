@@ -1,5 +1,5 @@
 import type { World } from 'thyseus'
-import { Query, Res } from 'thyseus'
+import { Entity, Query, Res } from 'thyseus'
 import { Position } from '../../components/position'
 import { AnimalAwareness } from '../../components/perception'
 import { SpeciesRef } from '../../components/animal'
@@ -8,10 +8,10 @@ import { BIOME_DEFS } from '../../map/tiles'
 import { getSpeciesDef } from '../../species/defs'
 
 export function foodAwarenessSystem(
-  query: Query<[Position, AnimalAwareness, SpeciesRef]>,
+  query: Query<[Entity, Position, AnimalAwareness, SpeciesRef]>,
   map: GameMap,
 ): void {
-  for (const [pos, awareness, speciesRef] of query) {
+  for (const [, pos, awareness, speciesRef] of query) {
     const def = getSpeciesDef(speciesRef.speciesId)
     const r = def.senseRadius
     awareness.foodNearby = false
@@ -34,6 +34,6 @@ export function foodAwarenessSystem(
   }
 }
 foodAwarenessSystem.getSystemArguments = (w: World) => [
-  Query.intoArgument(w, [Position, AnimalAwareness, SpeciesRef]),
+  Query.intoArgument(w, [Entity, Position, AnimalAwareness, SpeciesRef]),
   Res.intoArgument(w, GameMap),
 ]

@@ -15,12 +15,13 @@ export function hungerSystem(
   worldState: Res<WorldState>,
 ): void {
   for (const [entity, pos, hunger, speciesRef] of query) {
-    if (!entity.isAlive) continue
+    if (!entity.isAlive || worldState.despawnedThisTick.has(entity.id)) continue
     const def = getSpeciesDef(speciesRef.speciesId)
     hunger.value = Math.min(1, hunger.value + def.hungerRate)
     if (hunger.value >= 1) {
       map.removeEntity(entity.id as EntityId, pos.x, pos.y)
       events.emit({ tick: worldState.tick, origin: entity.id as EntityId, importance: 1, text: 'actor died (hunger)' })
+      worldState.despawnedThisTick.add(entity.id)
       entity.despawn()
     }
   }

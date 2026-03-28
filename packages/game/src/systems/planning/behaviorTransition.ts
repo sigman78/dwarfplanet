@@ -1,6 +1,6 @@
 // packages/game/src/systems/planning/behaviorTransition.ts
 import type { World } from 'thyseus'
-import { Query, Res } from 'thyseus'
+import { Entity, Query, Res } from 'thyseus'
 import {
   AnimalBehaviorState, AnimalBehaviorPhase,
   AnimalHunger, MigrationState, ReproductiveState, ReproductivePhase,
@@ -63,12 +63,12 @@ export function getNextPhase(
 }
 
 export function behaviorTransitionSystem(
-  query: Query<[Position, AnimalBehaviorState, AnimalHunger, MigrationState, ReproductiveState, AnimalAwareness, AnimalSocialAwareness, SpeciesRef]>,
+  query: Query<[Entity, Position, AnimalBehaviorState, AnimalHunger, MigrationState, ReproductiveState, AnimalAwareness, AnimalSocialAwareness, SpeciesRef]>,
   map: Res<GameMap>,
   rng: Res<Rng>,
   worldState: Res<WorldState>,
 ): void {
-  for (const [pos, bstate, hunger, migration, repro, awareness, social, speciesRef] of query) {
+  for (const [, pos, bstate, hunger, migration, repro, awareness, social, speciesRef] of query) {
     bstate.timer--
     if (bstate.timer > 0) continue
 
@@ -107,7 +107,7 @@ export function behaviorTransitionSystem(
   }
 }
 behaviorTransitionSystem.getSystemArguments = (w: World) => [
-  Query.intoArgument(w, [Position, AnimalBehaviorState, AnimalHunger, MigrationState, ReproductiveState, AnimalAwareness, AnimalSocialAwareness, SpeciesRef]),
+  Query.intoArgument(w, [Entity, Position, AnimalBehaviorState, AnimalHunger, MigrationState, ReproductiveState, AnimalAwareness, AnimalSocialAwareness, SpeciesRef]),
   Res.intoArgument(w, GameMap),
   Res.intoArgument(w, Rng),
   Res.intoArgument(w, WorldState),

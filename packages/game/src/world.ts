@@ -86,8 +86,8 @@ export class GameWorld {
   readonly events: GameEventsLog
   private readonly thyseusWorld: ThyseusWorld
   private readonly worldState: WorldState
-  private readonly speciesRefQuery: Query<[SpeciesRef]>
-  private readonly posSpeciesQuery: Query<[Position, SpeciesRef]>
+  private readonly speciesRefQuery: Query<[Entity, SpeciesRef]>
+  private readonly posSpeciesQuery: Query<[Entity, Position, SpeciesRef]>
   private readonly fullAnimalQuery: Query<[Entity, Position, AnimalHunger, AnimalAge, AnimalBehaviorState]>
 
   private constructor(
@@ -95,8 +95,8 @@ export class GameWorld {
     events: GameEventsLog,
     thyseusWorld: ThyseusWorld,
     worldState: WorldState,
-    speciesRefQuery: Query<[SpeciesRef]>,
-    posSpeciesQuery: Query<[Position, SpeciesRef]>,
+    speciesRefQuery: Query<[Entity, SpeciesRef]>,
+    posSpeciesQuery: Query<[Entity, Position, SpeciesRef]>,
     fullAnimalQuery: Query<[Entity, Position, AnimalHunger, AnimalAge, AnimalBehaviorState]>,
   ) {
     this.map = map
@@ -134,12 +134,12 @@ export class GameWorld {
       applyEntityUpdates,
     ])
 
+    const speciesRefQuery = Query.intoArgument(world, [Entity, SpeciesRef]) as Query<[Entity, SpeciesRef]>
+    const posSpeciesQuery = Query.intoArgument(world, [Entity, Position, SpeciesRef]) as Query<[Entity, Position, SpeciesRef]>
+    const fullAnimalQuery = Query.intoArgument(world, [Entity, Position, AnimalHunger, AnimalAge, AnimalBehaviorState]) as Query<[Entity, Position, AnimalHunger, AnimalAge, AnimalBehaviorState]>
+
     await world.prepare()
     await world.runSchedule(SetupSchedule)
-
-    const speciesRefQuery = Query.intoArgument(world, [SpeciesRef]) as Query<[SpeciesRef]>
-    const posSpeciesQuery = Query.intoArgument(world, [Position, SpeciesRef]) as Query<[Position, SpeciesRef]>
-    const fullAnimalQuery = Query.intoArgument(world, [Entity, Position, AnimalHunger, AnimalAge, AnimalBehaviorState]) as Query<[Entity, Position, AnimalHunger, AnimalAge, AnimalBehaviorState]>
 
     return new GameWorld(map, events, world, worldState, speciesRefQuery, posSpeciesQuery, fullAnimalQuery)
   }
@@ -155,7 +155,7 @@ export class GameWorld {
   getState() {
     let animalCount = 0
     let fishCount = 0
-    for (const [speciesRef] of this.speciesRefQuery) {
+    for (const [, speciesRef] of this.speciesRefQuery) {
       const def = getSpeciesDef(speciesRef.speciesId)
       if (def.habitat === 'land') animalCount++
       else fishCount++
@@ -169,7 +169,7 @@ export class GameWorld {
   }
 
   iterateActors(callback: (x: number, y: number, habitat: 'land' | 'water') => void): void {
-    for (const [pos, speciesRef] of this.posSpeciesQuery) {
+    for (const [, pos, speciesRef] of this.posSpeciesQuery) {
       const def = getSpeciesDef(speciesRef.speciesId)
       callback(pos.x, pos.y, def.habitat)
     }
@@ -180,5 +180,13 @@ export class GameWorld {
       if (entity.id === index) return { x: pos.x, y: pos.y, hunger: hunger.value, ageTicks: age.ticks, phase: bstate.phase }
     }
     return null
+  }
+
+  snapshotActors(): Array<{ id: number; x: number; y: number; hunger: number; ageTicks: number; phase: AnimalBehaviorPhase }> {
+    const result: Array<{ id: number; x: number; y: number; hunger: number; ageTicks: number; phase: AnimalBehaviorPhase }> = []
+    for (const [entity, pos, hunger, age, bstate] of this.fullAnimalQuery) {
+      result.push({ id: entity.id, x: pos.x, y: pos.y, hunger: hunger.value, ageTicks: age.ticks, phase: bstate.phase })
+    }
+    return result
   }
 }

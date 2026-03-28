@@ -14,11 +14,12 @@ export function ageSystem(
   worldState: Res<WorldState>,
 ): void {
   for (const [entity, pos, age] of query) {
-    if (!entity.isAlive) continue
+    if (!entity.isAlive || worldState.despawnedThisTick.has(entity.id)) continue
     age.ticks++
     if (age.ticks >= age.maxTicks) {
       map.removeEntity(entity.id as EntityId, pos.x, pos.y)
       events.emit({ tick: worldState.tick, origin: entity.id as EntityId, importance: 1, text: 'actor died (old age)' })
+      worldState.despawnedThisTick.add(entity.id)
       entity.despawn()
     }
   }
