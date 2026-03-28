@@ -1,3 +1,6 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - apps/*
+  - packages/*
+
+patchedDependencies:
+  thyseus@0.18.0: patches/thyseus@0.18.0.patch
