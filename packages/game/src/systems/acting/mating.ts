@@ -1,12 +1,8 @@
 import type { World } from 'thyseus'
 import { Entities, Entity, Query, Res } from 'thyseus'
-import {
-  Position,
-  AnimalBehaviorState, AnimalBehaviorPhase, AnimalHunger, AnimalAge,
-  AnimalHealth, ReproductiveState, ReproductivePhase, MigrationState, SpeciesRef,
-  AnimalAwareness, AnimalSocialAwareness,
-} from '@/components'
+import { Position, AnimalBehaviorState, AnimalBehaviorPhase, ReproductiveState, ReproductivePhase, SpeciesRef } from '@/components'
 import { GameMap } from '@/map'
+import { spawnAnimal } from '@/species/spawn'
 import { Rng } from '@/rng'
 import { GameEventsLog } from '@/events'
 import { WorldState } from '@/worldstate'
@@ -29,18 +25,7 @@ export function matingSystem(
       const nx = map.wrapX(pos.x + rng.int(-2, 2))
       const ny = Math.max(0, Math.min(map.height - 1, pos.y + rng.int(-2, 2)))
       const lifespan = def.baseLifespan + rng.int(-def.lifespanVariance, def.lifespanVariance)
-      const child = entities.spawn()
-        .add(new Position(nx, ny))
-        .add(new AnimalHealth())
-        .add(new AnimalHunger(rng.float() * 0.3))
-        .add(new AnimalAge(0, lifespan))
-        .add(new SpeciesRef(speciesRef.speciesId))
-        .add(new AnimalBehaviorState(AnimalBehaviorPhase.Wander, rng.int(5, 15)))
-        .add(new ReproductiveState(ReproductivePhase.Idle, 0))
-        .add(new MigrationState())
-        .add(new AnimalAwareness())
-        .add(new AnimalSocialAwareness())
-      map.addEntity(child.id as EntityId, nx, ny)
+      spawnAnimal(entities, map, nx, ny, speciesRef.speciesId, lifespan, rng.float() * 0.3, rng.int(5, 15))
     }
     events.emit({
       tick: worldState.tick,

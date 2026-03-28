@@ -16,39 +16,34 @@ export enum ReproductivePhase {
 }
 
 export class AnimalHealth {
-  constructor(public value = 100) {}
+  value = 100
 }
 
 export class AnimalHunger {
-  constructor(public value = 0) {}
+  value = 0
 }
 
 export class AnimalAge {
-  constructor(public ticks = 0, public maxTicks = 600) {}
+  ticks = 0
+  maxTicks = 600
 }
 
 export class SpeciesRef {
-  constructor(public speciesId = 0) {}
+  speciesId = 0
 }
 
 export class AnimalBehaviorState {
-  constructor(
-    public phase: AnimalBehaviorPhase = AnimalBehaviorPhase.Wander,
-    public timer = 0,
-  ) {}
+  phase: AnimalBehaviorPhase = AnimalBehaviorPhase.Wander
+  timer = 0
 }
 
 export class ReproductiveState {
-  constructor(
-    public phase: ReproductivePhase = ReproductivePhase.Idle,
-    public timer = 0,
-  ) {}
+  phase: ReproductivePhase = ReproductivePhase.Idle
+  timer = 0
 }
 
 export class MigrationState {
-  constructor(
-    public targetX = 0,
-    public targetY = 0,
-    public active = false,
-  ) {}
+  targetX = 0
+  targetY = 0
+  active = false
 }

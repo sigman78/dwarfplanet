@@ -1,19 +1,15 @@
 // packages/game/src/components/perception.ts
 
 export class AnimalAwareness {
-  constructor(
-    public foodNearby = false,
-    public foodX = 0,
-    public foodY = 0,
-    public canEatHere = false,
-  ) {}
+  foodNearby = false
+  foodX = 0
+  foodY = 0
+  canEatHere = false
 }
 
 export class AnimalSocialAwareness {
-  constructor(
-    public mateNearby = false,
-    public threatNearby = false,
-  ) {}
+  mateNearby = false
+  threatNearby = false
 }
 
 // Sub-project 2 stub — no fields yet
