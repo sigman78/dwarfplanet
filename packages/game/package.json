@@ -10,9 +10,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "miniplex": "^2.0.0",
     "pure-rand": "^6.1.0",
-    "simplex-noise": "^4.0.3"
+    "simplex-noise": "^4.0.3",
+    "thyseus": "^0.18.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

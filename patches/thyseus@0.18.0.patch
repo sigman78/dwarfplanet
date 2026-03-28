@@ -1,0 +1,13 @@
+diff --git a/dist/index.js b/dist/index.js
+index c8ff899b9dd08c45632070650bb8a9ee0870346f..567c5883227bfd5901d472cff244150b3831b26e 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -180,7 +180,7 @@ class Table {
+     }
+     for (const component of components)
+       targetTable.hasColumn(component.constructor) && targetTable.getColumn(component.constructor)?.push(component);
+-    return this.#columns[0]?.[this.#columns[0].length - 1];
++    return this.#columns[0]?.[row];
+   }
+   /**
+    * Returns a boolean indicating if this table contains a column for the provided component type.

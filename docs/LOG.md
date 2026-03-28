@@ -34,3 +34,18 @@
 - `hasFoodNearby`/`seekSystem` explicit Y-bounds clamping
 - Biome split: `Water`→`DeepWater` (height<0.2) + `CoastalWater` (0.2–0.3); `CoastalWater` is fish food biome
 
+## 2026-03-27 — Thyseus ECS Migration (Sub-project 1)
+
+Replaced Miniplex v2 with Thyseus v0.18.0. Architecture redesign:
+
+- Plain TypeScript class components (no decorators) replacing Miniplex entity/component model
+- Per-system DI via `getSystemArguments` instead of manual `SystemContext` bag
+- 5-phase scheduling: PrePhase -> Sensing -> Planning -> Acting -> Resolving
+- Perception components (AnimalAwareness, AnimalSocialAwareness) written by sensing systems
+- Species config extracted to static `SpeciesDef` registry (deer, wolf, salmon)
+- Async `Game.create(seed, config)` factory + `await game.step()`
+- SP2/SP3 extension point stubs created (person, things components + empty systems)
+- Patched Thyseus 0.18.0 Table.move() bug (formalized as patches/thyseus@0.18.0.patch)
+
+All 48 tests passing. Map, RNG, simulation behavior unchanged.
+
